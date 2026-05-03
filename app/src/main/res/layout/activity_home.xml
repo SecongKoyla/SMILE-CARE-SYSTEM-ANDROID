@@ -24,6 +24,21 @@
             android:textStyle="bold"
             android:textColor="@color/white"/>
 
+        <ImageView
+            android:id="@+id/imageProfile"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:clipToOutline="true"
+            android:outlineProvider="background"
+            android:contentDescription="Profile"
+            android:padding="2dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/profile"
+            android:clickable="true"
+            android:focusable="true" />
+
         <TextView
             android:id="@+id/textLogout"
             android:layout_width="wrap_content"
