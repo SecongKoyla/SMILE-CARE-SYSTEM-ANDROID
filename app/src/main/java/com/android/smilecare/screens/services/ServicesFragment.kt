@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
+import com.android.smilecare.screens.home.HomeActivity
 
 class ServicesFragment : Fragment() {
 
@@ -31,6 +33,10 @@ class ServicesFragment : Fragment() {
             item.findViewById<TextView>(R.id.textServicePrice).text = "₱${service.price}"
             item.findViewById<TextView>(R.id.textServiceDuration).text =
                 if (service.durationMinutes >= 60) "${service.durationMinutes / 60} hr" else "${service.durationMinutes} min"
+
+            item.findViewById<Button>(R.id.buttonBookNow).setOnClickListener {
+                (activity as? HomeActivity)?.navigateToBookAppointment(service.name)
+            }
 
             list.addView(item)
         }
