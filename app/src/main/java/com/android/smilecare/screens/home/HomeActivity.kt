@@ -1,18 +1,22 @@
 package com.android.smilecare.screens.home
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.appcompat.widget.PopupMenu
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
 import com.android.smilecare.screens.appointments.AppointmentsFragment
 import com.android.smilecare.screens.bookappointment.BookAppointmentFragment
 import com.android.smilecare.screens.login.LoginActivity
+import com.android.smilecare.screens.profile.ProfileActivity
 import com.android.smilecare.screens.services.ServicesFragment
 
 class HomeActivity : AppCompatActivity(), HomeContract.View {
@@ -38,6 +42,10 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
         presenter.loadHome()
 
+        findViewById<View>(R.id.imageProfile).setOnClickListener { anchor ->
+            showProfileMenu(anchor)
+        }
+
         findViewById<View>(R.id.buttonHeroBookAppointment).setOnClickListener {
             navigateToBookAppointment()
         }
@@ -58,6 +66,44 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         }
 
         findViewById<TextView>(R.id.textLogout).setOnClickListener { presenter.logout() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateProfileAvatar()
+    }
+
+    private fun updateProfileAvatar() {
+        val app = application as CustomApp
+        val image = findViewById<ImageView>(R.id.imageProfile)
+        val photoUri = app.loggedInUser?.photoUri.orEmpty()
+        if (photoUri.isNotBlank()) {
+            image.setImageURI(Uri.parse(photoUri))
+        } else {
+            image.setImageResource(R.drawable.profile)
+        }
+    }
+
+    private fun showProfileMenu(anchor: View) {
+        val popup = PopupMenu(this, anchor)
+        popup.menu.add(0, 1, 0, "View Profile")
+        popup.menu.add(0, 2, 1, "Change Password")
+        popup.menu.add(0, 3, 2, "Upload Photo")
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                1 -> openProfile(ProfileActivity.SECTION_VIEW_PROFILE)
+                2 -> openProfile(ProfileActivity.SECTION_CHANGE_PASSWORD)
+                3 -> openProfile(ProfileActivity.SECTION_PROFILE_PHOTO)
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun openProfile(section: String) {
+        startActivity(
+            Intent(this, ProfileActivity::class.java).putExtra(ProfileActivity.EXTRA_OPEN_SECTION, section)
+        )
     }
 
     private fun loadFragment(fragment: Fragment) {

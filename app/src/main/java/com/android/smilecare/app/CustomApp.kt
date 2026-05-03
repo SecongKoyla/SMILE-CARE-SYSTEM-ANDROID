@@ -50,7 +50,8 @@ class CustomApp : Application() {
                     firstName = obj.optString("firstName", ""),
                     lastName = obj.optString("lastName", ""),
                     email = obj.optString("email", ""),
-                    password = obj.optString("password", "")
+                    password = obj.optString("password", ""),
+                    photoUri = obj.optString("photoUri", "")
                 )
             )
         }
@@ -68,6 +69,7 @@ class CustomApp : Application() {
             obj.put("lastName", user.lastName)
             obj.put("email", user.email)
             obj.put("password", user.password)
+            obj.put("photoUri", user.photoUri)
             jsonArray.put(obj)
         }
         prefs.edit().putString("users", jsonArray.toString()).apply()
