@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="teal_primary">#2DD4BF</color>
+    <color name="teal_dark">#0D9488</color>
+    <color name="teal_light">#CCFBF1</color>
+
+    <color name="navy_dark">#1E2D3D</color>
+    <color name="navy_medium">#253547</color>
+
+    <color name="background">#F0F4F8</color>
+    <color name="surface">#FFFFFF</color>
+
+    <color name="text_primary">#1A2332</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_hint">#9CA3AF</color>
+
+    <color name="divider">#E5E7EB</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Status Colors -->
+    <color name="status_approved">#10B981</color>
+    <color name="status_pending">#F59E0B</color>
+    <color name="status_completed">#6366F1</color>
+    <color name="status_cancelled">#EF4444</color>
+
+    <!-- Status Backgrounds -->
+    <color name="status_approved_bg">#D1FAE5</color>
+    <color name="status_pending_bg">#FEF3C7</color>
+    <color name="status_completed_bg">#E0E7FF</color>
+    <color name="status_cancelled_bg">#FEE2E2</color>
+</resources>

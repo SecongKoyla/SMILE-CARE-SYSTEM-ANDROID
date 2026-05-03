@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:gravity="center_vertical"
+    android:layout_marginBottom="10dp">
+
+    <!-- Date Badge -->
+    <LinearLayout
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_teal_pill"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/textApptDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Apr 08"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/teal_dark"
+            android:gravity="center"/>
+    </LinearLayout>
+
+    <!-- Service Info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="14dp">
+
+        <TextView
+            android:id="@+id/textApptService"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Whitening"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/textApptTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="08:00 AM"
+            android:textSize="13sp"
+            android:textColor="@color/teal_primary"
+            android:layout_marginTop="2dp"/>
+    </LinearLayout>
+
+    <!-- Right Side -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <!-- Status Badge -->
+        <TextView
+            android:id="@+id/textApptStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Approved"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/status_approved"
+            android:background="@drawable/bg_status_approved"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"/>
+
+        <!-- Cancel Button -->
+        <TextView
+            android:id="@+id/btnCancelAppt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/status_cancelled"
+            android:paddingTop="8dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+</LinearLayout>
