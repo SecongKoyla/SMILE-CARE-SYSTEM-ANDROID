@@ -5,6 +5,7 @@ class RegisterContract {
         fun showEmptyFieldsMessage()
         fun showEmailAlreadyExistsMessage()
         fun showPasswordMismatchMessage()
+        fun showPasswordLengthMessage()
         fun showSuccessMessage()
         fun showLoginScreen()
     }

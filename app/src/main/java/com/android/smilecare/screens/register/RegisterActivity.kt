@@ -35,6 +35,7 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
     override fun showEmptyFieldsMessage() = toast("Please fill in all fields.")
     override fun showEmailAlreadyExistsMessage() = toast("Email is already registered.")
     override fun showPasswordMismatchMessage() = toast("Passwords do not match.")
+    override fun showPasswordLengthMessage() = toast("Password must be at least 8 characters.")
     override fun showSuccessMessage() = toast("Account created successfully!")
     override fun showLoginScreen() = finish()
 }

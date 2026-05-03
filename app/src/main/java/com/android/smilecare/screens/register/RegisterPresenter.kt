@@ -19,6 +19,10 @@ class RegisterPresenter(
             view.showPasswordMismatchMessage()
             return
         }
+        if (password.length < 8) {
+            view.showPasswordLengthMessage()
+            return
+        }
         if (model.isEmailTaken(email)) {
             view.showEmailAlreadyExistsMessage()
             return
