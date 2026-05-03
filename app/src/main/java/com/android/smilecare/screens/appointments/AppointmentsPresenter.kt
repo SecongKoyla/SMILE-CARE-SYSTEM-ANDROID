@@ -13,7 +13,12 @@ class AppointmentsPresenter(
 
     override fun loadAppointments(filter: String) {
         currentFilter = filter
-        val allAppts = app.appointments.sortedByDescending { it.date }
+        val userEmail = app.loggedInUser?.email
+        val allAppts = app.appointments
+            .asSequence()
+            .filter { userEmail != null && it.userEmail.equals(userEmail, ignoreCase = true) }
+            .sortedByDescending { it.date }
+            .toList()
         
         val filtered = if (filter == "All") {
             allAppts
@@ -31,10 +36,11 @@ class AppointmentsPresenter(
     }
 
     override fun cancelAppointment(appointment: Appointment) {
-        val index = app.appointments.indexOf(appointment)
+        val index = app.appointments.indexOfFirst { it.id == appointment.id }
         if (index != -1) {
             val updated = app.appointments[index].copy(status = AppointmentStatus.CANCELLED)
             app.appointments[index] = updated
+            app.saveAppointments()
             view.showMessage("Appointment cancelled")
             loadAppointments(currentFilter) // reload with same filter
         }

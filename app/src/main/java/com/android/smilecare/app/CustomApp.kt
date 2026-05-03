@@ -2,8 +2,10 @@ package com.android.smilecare.app
 
 import android.app.Application
 import com.android.smilecare.data.Appointment
+import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
+import java.util.Date
 
 class CustomApp : Application() {
 
@@ -26,6 +28,7 @@ class CustomApp : Application() {
     override fun onCreate() {
         super.onCreate()
         loadUsers()
+        loadAppointments()
     }
 
     private fun loadUsers() {
@@ -68,5 +71,57 @@ class CustomApp : Application() {
             jsonArray.put(obj)
         }
         prefs.edit().putString("users", jsonArray.toString()).apply()
+    }
+
+    private fun loadAppointments() {
+        val apptsJson = prefs.getString("appointments", null) ?: "[]"
+        val jsonArray = try {
+            org.json.JSONArray(apptsJson)
+        } catch (_: Exception) {
+            prefs.edit().remove("appointments").apply()
+            org.json.JSONArray()
+        }
+
+        appointments.clear()
+        for (i in 0 until jsonArray.length()) {
+            val obj = jsonArray.optJSONObject(i) ?: continue
+            val serviceName = obj.optString("serviceName", "")
+            val service = services.firstOrNull { it.name.equals(serviceName, ignoreCase = true) } ?: continue
+
+            val millis = obj.optLong("dateMillis", -1L)
+            if (millis <= 0L) continue
+
+            val status = try {
+                AppointmentStatus.valueOf(obj.optString("status", AppointmentStatus.PENDING.name))
+            } catch (_: Exception) {
+                AppointmentStatus.PENDING
+            }
+
+            appointments.add(
+                Appointment(
+                    id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                    userEmail = obj.optString("userEmail", ""),
+                    service = service,
+                    date = Date(millis),
+                    timeSlot = obj.optString("timeSlot", ""),
+                    status = status
+                )
+            )
+        }
+    }
+
+    fun saveAppointments() {
+        val jsonArray = org.json.JSONArray()
+        for (appt in appointments) {
+            val obj = org.json.JSONObject()
+            obj.put("id", appt.id)
+            obj.put("userEmail", appt.userEmail)
+            obj.put("serviceName", appt.service.name)
+            obj.put("dateMillis", appt.date.time)
+            obj.put("timeSlot", appt.timeSlot)
+            obj.put("status", appt.status.name)
+            jsonArray.put(obj)
+        }
+        prefs.edit().putString("appointments", jsonArray.toString()).apply()
     }
 }

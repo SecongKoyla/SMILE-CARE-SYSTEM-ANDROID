@@ -95,12 +95,14 @@ class BookAppointmentFragment : Fragment() {
                 selectedTime == null -> toast("Please select a time slot.")
                 else -> {
                     val appt = Appointment(
+                        userEmail = app.loggedInUser?.email.orEmpty(),
                         service = selectedService!!,
                         date = selectedDate!!.time,
                         timeSlot = selectedTime!!,
                         status = AppointmentStatus.PENDING
                     )
                     app.appointments.add(appt)
+                    app.saveAppointments()
                     toast("Appointment booked successfully!")
                     resetForm(view)
                 }
@@ -118,6 +120,7 @@ class BookAppointmentFragment : Fragment() {
                 val sel = selectedDate!!
                 cal.get(Calendar.YEAR) == sel.get(Calendar.YEAR) &&
                 cal.get(Calendar.DAY_OF_YEAR) == sel.get(Calendar.DAY_OF_YEAR)
+                        && it.status != AppointmentStatus.CANCELLED
             }
             .map { it.timeSlot }
 
