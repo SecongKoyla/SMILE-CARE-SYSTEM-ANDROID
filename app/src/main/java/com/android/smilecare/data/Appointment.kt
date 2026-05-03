@@ -4,6 +4,7 @@ import java.util.Date
 
 data class Appointment(
     val id: String = java.util.UUID.randomUUID().toString(),
+    val userEmail: String = "",
     val service: DentalService,
     val date: Date,
     val timeSlot: String,

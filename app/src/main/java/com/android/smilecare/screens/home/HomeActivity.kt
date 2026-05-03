@@ -38,13 +38,17 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
         presenter.loadHome()
 
+        findViewById<View>(R.id.buttonHeroBookAppointment).setOnClickListener {
+            navigateToBookAppointment()
+        }
+
         navHome.setOnClickListener { showHomeDashboard(); setActiveNav(0) }
         navAppointments.setOnClickListener { loadFragment(AppointmentsFragment()); setActiveNav(1) }
-        navBook.setOnClickListener { loadFragment(BookAppointmentFragment()); setActiveNav(2) }
+        navBook.setOnClickListener { navigateToBookAppointment() }
         navServices.setOnClickListener { loadFragment(ServicesFragment()); setActiveNav(3) }
 
         findViewById<LinearLayout>(R.id.quickActionBook).setOnClickListener {
-            loadFragment(BookAppointmentFragment()); setActiveNav(2)
+            navigateToBookAppointment()
         }
         findViewById<LinearLayout>(R.id.quickActionAppointments).setOnClickListener {
             loadFragment(AppointmentsFragment()); setActiveNav(1)
@@ -62,6 +66,11 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
             .replace(R.id.fragmentContainer, fragment)
             .commit()
         findViewById<View>(R.id.fragmentContainer).visibility = View.VISIBLE
+    }
+
+    fun navigateToBookAppointment(preselectedServiceName: String? = null) {
+        loadFragment(BookAppointmentFragment.newInstance(preselectedServiceName))
+        setActiveNav(2)
     }
 
     private fun showHomeDashboard() {

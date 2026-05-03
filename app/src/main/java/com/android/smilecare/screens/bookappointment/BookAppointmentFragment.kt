@@ -23,6 +23,18 @@ class BookAppointmentFragment : Fragment() {
     private var selectedTime: String? = null
     private val timeSlots = listOf("8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM")
 
+    companion object {
+        private const val ARG_PRESELECT_SERVICE_NAME = "preselect_service_name"
+
+        fun newInstance(preselectedServiceName: String?): BookAppointmentFragment {
+            return BookAppointmentFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_PRESELECT_SERVICE_NAME, preselectedServiceName)
+                }
+            }
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_book_appointment, container, false)
     }
@@ -30,6 +42,7 @@ class BookAppointmentFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val app = requireActivity().application as CustomApp
+        val preselectedServiceName = arguments?.getString(ARG_PRESELECT_SERVICE_NAME)
 
         // Service selection
         val serviceGroup = view.findViewById<RadioGroup>(R.id.radioGroupServices)
@@ -47,6 +60,17 @@ class BookAppointmentFragment : Fragment() {
         serviceGroup.setOnCheckedChangeListener { group, checkedId ->
             val rb = group.findViewById<RadioButton>(checkedId)
             selectedService = rb?.tag as? DentalService
+        }
+
+        if (!preselectedServiceName.isNullOrBlank()) {
+            for (i in 0 until serviceGroup.childCount) {
+                val rb = serviceGroup.getChildAt(i) as? RadioButton ?: continue
+                val service = rb.tag as? DentalService ?: continue
+                if (service.name.equals(preselectedServiceName, ignoreCase = true)) {
+                    rb.isChecked = true
+                    break
+                }
+            }
         }
 
         // Date picker
@@ -71,12 +95,14 @@ class BookAppointmentFragment : Fragment() {
                 selectedTime == null -> toast("Please select a time slot.")
                 else -> {
                     val appt = Appointment(
+                        userEmail = app.loggedInUser?.email.orEmpty(),
                         service = selectedService!!,
                         date = selectedDate!!.time,
                         timeSlot = selectedTime!!,
                         status = AppointmentStatus.PENDING
                     )
                     app.appointments.add(appt)
+                    app.saveAppointments()
                     toast("Appointment booked successfully!")
                     resetForm(view)
                 }
@@ -94,6 +120,7 @@ class BookAppointmentFragment : Fragment() {
                 val sel = selectedDate!!
                 cal.get(Calendar.YEAR) == sel.get(Calendar.YEAR) &&
                 cal.get(Calendar.DAY_OF_YEAR) == sel.get(Calendar.DAY_OF_YEAR)
+                        && it.status != AppointmentStatus.CANCELLED
             }
             .map { it.timeSlot }
 

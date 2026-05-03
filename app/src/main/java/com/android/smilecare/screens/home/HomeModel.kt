@@ -2,6 +2,7 @@ package com.android.smilecare.screens.home
 
 import com.android.smilecare.app.CustomApp
 import com.android.smilecare.data.Appointment
+import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.User
 import java.util.Calendar
 
@@ -19,7 +20,11 @@ class HomeModel(private val app: CustomApp) {
     }
 
     fun getNextAppointment(): Appointment? {
+        val userEmail = app.loggedInUser?.email ?: return null
         return app.appointments
+            .asSequence()
+            .filter { it.userEmail.equals(userEmail, ignoreCase = true) }
+            .filter { it.status != AppointmentStatus.CANCELLED }
             .filter { it.date.after(java.util.Date()) }
             .minByOrNull { it.date }
     }
