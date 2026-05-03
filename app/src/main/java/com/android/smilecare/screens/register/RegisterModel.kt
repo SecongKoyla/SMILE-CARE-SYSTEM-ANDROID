@@ -11,5 +11,6 @@ class RegisterModel(private val app: CustomApp) {
 
     fun registerUser(firstName: String, lastName: String, email: String, password: String) {
         app.registeredUsers.add(User(firstName, lastName, email, password))
+        app.saveUsers()
     }
 }

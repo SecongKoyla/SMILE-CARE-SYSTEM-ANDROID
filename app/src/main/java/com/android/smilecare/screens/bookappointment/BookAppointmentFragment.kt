@@ -117,7 +117,7 @@ class BookAppointmentFragment : Fragment() {
             }
             container.addView(btn)
         }
-        view.findViewById<LinearLayout>(R.id.timeSlotsSection).visibility = View.VISIBLE
+        view.findViewById<View>(R.id.timeSlotsSection).visibility = View.VISIBLE
     }
 
     private fun highlightSelected(container: ViewGroup, selected: Button) {
@@ -139,6 +139,6 @@ class BookAppointmentFragment : Fragment() {
         view.findViewById<RadioGroup>(R.id.radioGroupServices).clearCheck()
         view.findViewById<TextView>(R.id.textSelectedDate).text = "No date selected"
         view.findViewById<ViewGroup>(R.id.timeSlotsContainer).removeAllViews()
-        view.findViewById<LinearLayout>(R.id.timeSlotsSection).visibility = View.GONE
+        view.findViewById<View>(R.id.timeSlotsSection).visibility = View.GONE
     }
 }

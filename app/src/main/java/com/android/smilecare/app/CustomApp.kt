@@ -21,9 +21,52 @@ class CustomApp : Application() {
 
     val appointments = mutableListOf<Appointment>()
 
+    private val prefs by lazy { getSharedPreferences("smilecare_prefs", android.content.Context.MODE_PRIVATE) }
+
     override fun onCreate() {
         super.onCreate()
-        // Seed a demo user
-        registeredUsers.add(User("John", "Doe", "test@gmail.com", "1234"))
+        loadUsers()
+    }
+
+    private fun loadUsers() {
+        registeredUsers.clear()
+
+        val usersJson = prefs.getString("users", null) ?: "[]"
+        val jsonArray = try {
+            org.json.JSONArray(usersJson)
+        } catch (_: Exception) {
+            // If preferences got corrupted (or legacy value was null), recover gracefully.
+            prefs.edit().remove("users").apply()
+            org.json.JSONArray()
+        }
+
+        for (i in 0 until jsonArray.length()) {
+            val obj = jsonArray.optJSONObject(i) ?: continue
+            registeredUsers.add(
+                User(
+                    firstName = obj.optString("firstName", ""),
+                    lastName = obj.optString("lastName", ""),
+                    email = obj.optString("email", ""),
+                    password = obj.optString("password", "")
+                )
+            )
+        }
+        if (registeredUsers.isEmpty()) {
+            registeredUsers.add(User("John", "Doe", "test@gmail.com", "1234"))
+            saveUsers()
+        }
+    }
+
+    fun saveUsers() {
+        val jsonArray = org.json.JSONArray()
+        for (user in registeredUsers) {
+            val obj = org.json.JSONObject()
+            obj.put("firstName", user.firstName)
+            obj.put("lastName", user.lastName)
+            obj.put("email", user.email)
+            obj.put("password", user.password)
+            jsonArray.put(obj)
+        }
+        prefs.edit().putString("users", jsonArray.toString()).apply()
     }
 }
