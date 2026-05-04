@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:gravity="center_vertical"
+    android:layout_marginBottom="10dp">
+
+    <!-- Avatar initials circle -->
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_avatar_circle">
+        <TextView
+            android:id="@+id/textClientInitials"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="JD"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/teal_dark"
+            android:gravity="center"/>
+    </FrameLayout>
+
+    <!-- Name + email -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginLeft="12dp">
+
+        <TextView
+            android:id="@+id/textClientName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="John Doe"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/textClientEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="john@email.com"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"/>
+    </LinearLayout>
+
+    <!-- Appointment count badge -->
+    <TextView
+        android:id="@+id/textClientApptCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3 appointments"
+        android:textSize="11sp"
+        android:textColor="@color/teal_dark"
+        android:background="@drawable/bg_teal_pill"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"/>
+
+</LinearLayout>
