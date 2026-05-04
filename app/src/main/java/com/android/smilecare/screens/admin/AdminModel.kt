@@ -52,10 +52,12 @@ class AdminModel(private val app: CustomApp) {
 
     fun addService(service: DentalService) {
         app.services.add(service)
+        app.saveServices()
     }
 
     fun deleteService(service: DentalService) {
         app.services.removeAll { it.name.equals(service.name, ignoreCase = true) }
+        app.saveServices()
         // Also remove appointments that referenced this service
         app.appointments.removeAll { it.service.name.equals(service.name, ignoreCase = true) }
         app.saveAppointments()

@@ -15,10 +15,41 @@ class ManageServicesPresenter(
         name: String, description: String,
         price: String, durationMin: String, emoji: String
     ) {
-        if (name.isBlank()) { view.showMessage("Service name is required"); return }
-        val priceInt = price.toIntOrNull() ?: 0
-        val dur = durationMin.toIntOrNull() ?: 30
-        val service = DentalService(name.trim(), description.trim(), priceInt, dur, emoji.ifBlank { "🦷" })
+        val trimmedName = name.trim()
+        val trimmedDesc = description.trim()
+        if (trimmedName.isBlank()) {
+            view.showMessage("Service name is required")
+            return
+        }
+        if (trimmedDesc.isBlank()) {
+            view.showMessage("Service description is required")
+            return
+        }
+
+        val priceInt = price.trim().toIntOrNull()
+        if (priceInt == null || priceInt <= 0) {
+            view.showMessage("Valid price is required")
+            return
+        }
+
+        val dur = durationMin.trim().toIntOrNull()
+        if (dur == null || dur <= 0) {
+            view.showMessage("Valid duration (minutes) is required")
+            return
+        }
+
+        if (model.getServices().any { it.name.equals(trimmedName, ignoreCase = true) }) {
+            view.showMessage("Service already exists")
+            return
+        }
+
+        val service = DentalService(
+            trimmedName,
+            trimmedDesc,
+            priceInt,
+            dur,
+            emoji.trim().ifBlank { "🦷" }
+        )
         model.addService(service)
         view.showMessage("Service added")
         view.dismissDialog()
