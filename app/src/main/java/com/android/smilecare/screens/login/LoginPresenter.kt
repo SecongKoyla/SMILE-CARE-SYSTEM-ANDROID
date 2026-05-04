@@ -1,5 +1,7 @@
 package com.android.smilecare.screens.login
 
+import com.android.smilecare.data.UserRole
+
 class LoginPresenter(
     private val view: LoginContract.View,
     private val model: LoginModel
@@ -14,7 +16,11 @@ class LoginPresenter(
         if (user != null) {
             model.saveLoggedInUser(user)
             view.showSuccessMessage()
-            view.showHomeScreen()
+            if (user.role == UserRole.ADMIN) {
+                view.showAdminScreen()
+            } else {
+                view.showHomeScreen()
+            }
         } else {
             view.showInvalidCredentialsMessage()
         }

@@ -5,6 +5,7 @@ import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
+import com.android.smilecare.data.UserRole
 import java.util.Date
 
 class CustomApp : Application() {
@@ -33,12 +34,10 @@ class CustomApp : Application() {
 
     private fun loadUsers() {
         registeredUsers.clear()
-
         val usersJson = prefs.getString("users", null) ?: "[]"
         val jsonArray = try {
             org.json.JSONArray(usersJson)
         } catch (_: Exception) {
-            // If preferences got corrupted (or legacy value was null), recover gracefully.
             prefs.edit().remove("users").apply()
             org.json.JSONArray()
         }
@@ -48,17 +47,24 @@ class CustomApp : Application() {
             registeredUsers.add(
                 User(
                     firstName = obj.optString("firstName", ""),
-                    lastName = obj.optString("lastName", ""),
-                    email = obj.optString("email", ""),
-                    password = obj.optString("password", ""),
-                    photoUri = obj.optString("photoUri", "")
+                    lastName  = obj.optString("lastName", ""),
+                    email     = obj.optString("email", ""),
+                    password  = obj.optString("password", ""),
+                    photoUri  = obj.optString("photoUri", ""),
+                    role      = try { UserRole.valueOf(obj.optString("role", "USER")) } catch (_: Exception) { UserRole.USER }
                 )
             )
         }
-        if (registeredUsers.isEmpty()) {
-            registeredUsers.add(User("John", "Doe", "test@gmail.com", "1234"))
-            saveUsers()
+
+        // Seed demo user
+        if (registeredUsers.none { it.email.equals("test@gmail.com", ignoreCase = true) }) {
+            registeredUsers.add(User("John", "Doe", "test@gmail.com", "1234", role = UserRole.USER))
         }
+        // Seed admin user
+        if (registeredUsers.none { it.email.equals("test@smilecare.com", ignoreCase = true) }) {
+            registeredUsers.add(User("Test", "User", "test@smilecare.com", "123456", role = UserRole.ADMIN))
+        }
+        saveUsers()
     }
 
     fun saveUsers() {
@@ -70,6 +76,7 @@ class CustomApp : Application() {
             obj.put("email", user.email)
             obj.put("password", user.password)
             obj.put("photoUri", user.photoUri)
+            obj.put("role", user.role.name)
             jsonArray.put(obj)
         }
         prefs.edit().putString("users", jsonArray.toString()).apply()
@@ -89,24 +96,20 @@ class CustomApp : Application() {
             val obj = jsonArray.optJSONObject(i) ?: continue
             val serviceName = obj.optString("serviceName", "")
             val service = services.firstOrNull { it.name.equals(serviceName, ignoreCase = true) } ?: continue
-
             val millis = obj.optLong("dateMillis", -1L)
             if (millis <= 0L) continue
-
             val status = try {
                 AppointmentStatus.valueOf(obj.optString("status", AppointmentStatus.PENDING.name))
-            } catch (_: Exception) {
-                AppointmentStatus.PENDING
-            }
+            } catch (_: Exception) { AppointmentStatus.PENDING }
 
             appointments.add(
                 Appointment(
-                    id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                    id        = obj.optString("id", java.util.UUID.randomUUID().toString()),
                     userEmail = obj.optString("userEmail", ""),
-                    service = service,
-                    date = Date(millis),
-                    timeSlot = obj.optString("timeSlot", ""),
-                    status = status
+                    service   = service,
+                    date      = Date(millis),
+                    timeSlot  = obj.optString("timeSlot", ""),
+                    status    = status
                 )
             )
         }

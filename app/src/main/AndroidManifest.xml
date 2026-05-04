@@ -32,5 +32,9 @@
             android:name=".screens.profile.ProfileActivity"
             android:exported="false"/>
 
+        <activity
+            android:name=".screens.admin.AdminActivity"
+            android:exported="false"/>
+
     </application>
 </manifest>

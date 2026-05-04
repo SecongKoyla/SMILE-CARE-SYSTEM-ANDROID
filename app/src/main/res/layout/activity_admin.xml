@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <!-- ── Top Bar ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/navy_dark"
+        android:orientation="horizontal"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:gravity="center_vertical">
+
+        <!-- Logo + Admin badge -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🦷 SmileCare"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" Admin"
+            android:textSize="11sp"
+            android:textColor="@color/teal_primary"
+            android:textStyle="bold"
+            android:layout_marginStart="4dp"/>
+
+        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+
+        <!-- Admin name -->
+        <TextView
+            android:id="@+id/textAdminName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test User"
+            android:textSize="13sp"
+            android:textColor="@color/white"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- Avatar circle -->
+        <FrameLayout
+            android:id="@+id/imageAdminProfile"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:layout_marginEnd="12dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="U"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/navy_dark"
+                android:gravity="center"/>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/textAdminLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textSize="12sp"
+            android:textColor="@color/teal_primary"
+            android:padding="4dp"/>
+    </LinearLayout>
+
+    <!-- ── Tab Bar ── -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="2dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:orientation="horizontal"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tabAllAppointments"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="All Appointments"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:background="@drawable/bg_tab_active"
+                android:textColor="@color/teal_dark"
+                android:layout_marginEnd="6dp"/>
+
+            <TextView
+                android:id="@+id/tabManageServices"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="Manage Services"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:background="@drawable/bg_tab_inactive"
+                android:textColor="@color/text_secondary"
+                android:layout_marginEnd="6dp"/>
+
+            <TextView
+                android:id="@+id/tabClinicAvailability"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="Clinic Availability"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:background="@drawable/bg_tab_inactive"
+                android:textColor="@color/text_secondary"
+                android:layout_marginEnd="6dp"/>
+
+            <TextView
+                android:id="@+id/tabRegisteredClients"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="Registered Clients"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:background="@drawable/bg_tab_inactive"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- ── Content Area ── -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- TAB 1: All Appointments -->
+        <ScrollView
+            android:id="@+id/contentAllAppointments"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Page title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="All Appointments"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="2dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage and track all patient appointments"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Stat cards row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:layout_marginEnd="6dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📋 TOTAL" android:textSize="9sp" android:textStyle="bold" android:textColor="@color/text_secondary"/>
+                        <TextView android:id="@+id/statTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="26sp" android:textStyle="bold" android:textColor="@color/text_primary"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:layout_marginEnd="6dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="✅ APPROVED" android:textSize="9sp" android:textStyle="bold" android:textColor="@color/status_approved"/>
+                        <TextView android:id="@+id/statApproved" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="26sp" android:textStyle="bold" android:textColor="@color/status_approved"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏳ PENDING" android:textSize="9sp" android:textStyle="bold" android:textColor="@color/status_pending"/>
+                        <TextView android:id="@+id/statPending" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="26sp" android:textStyle="bold" android:textColor="@color/status_pending"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Stat cards row 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:layout_marginEnd="6dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🏁 COMPLETED" android:textSize="9sp" android:textStyle="bold" android:textColor="@color/status_completed"/>
+                        <TextView android:id="@+id/statCompleted" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="26sp" android:textStyle="bold" android:textColor="@color/status_completed"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❌ CANCELLED" android:textSize="9sp" android:textStyle="bold" android:textColor="@color/status_cancelled"/>
+                        <TextView android:id="@+id/statCancelled" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="26sp" android:textStyle="bold" android:textColor="@color/status_cancelled"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+                </LinearLayout>
+
+                <!-- Status filter chips -->
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+                    <RadioGroup
+                        android:id="@+id/rgAdminStatusFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <RadioButton android:id="@+id/rbAdminAll"       android:layout_width="wrap_content" android:layout_height="36dp" android:text="All"       android:button="@null" android:gravity="center" android:paddingLeft="16dp" android:paddingRight="16dp" android:textSize="12sp" android:textStyle="bold" android:checked="true"  android:layout_marginEnd="6dp"/>
+                        <RadioButton android:id="@+id/rbAdminApproved"  android:layout_width="wrap_content" android:layout_height="36dp" android:text="Approved"  android:button="@null" android:gravity="center" android:paddingLeft="16dp" android:paddingRight="16dp" android:textSize="12sp"                        android:layout_marginEnd="6dp"/>
+                        <RadioButton android:id="@+id/rbAdminPending"   android:layout_width="wrap_content" android:layout_height="36dp" android:text="Pending"   android:button="@null" android:gravity="center" android:paddingLeft="16dp" android:paddingRight="16dp" android:textSize="12sp"                        android:layout_marginEnd="6dp"/>
+                        <RadioButton android:id="@+id/rbAdminCompleted" android:layout_width="wrap_content" android:layout_height="36dp" android:text="Completed" android:button="@null" android:gravity="center" android:paddingLeft="16dp" android:paddingRight="16dp" android:textSize="12sp"                        android:layout_marginEnd="6dp"/>
+                        <RadioButton android:id="@+id/rbAdminCancelled" android:layout_width="wrap_content" android:layout_height="36dp" android:text="Cancelled" android:button="@null" android:gravity="center" android:paddingLeft="16dp" android:paddingRight="16dp" android:textSize="12sp"/>
+                    </RadioGroup>
+                </HorizontalScrollView>
+
+                <!-- Date filter row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_card"
+                    android:padding="12dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filter by Date"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/textSelectedDateFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="All dates"
+                        android:textSize="12sp"
+                        android:textColor="@color/teal_dark"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:id="@+id/textClearDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✕"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:padding="4dp"
+                        android:layout_marginEnd="4dp"/>
+
+                    <ImageButton
+                        android:id="@+id/btnPickDate"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_menu_my_calendar"
+                        android:background="@drawable/bg_teal_pill"
+                        android:padding="4dp"/>
+                </LinearLayout>
+
+                <!-- Empty state -->
+                <TextView
+                    android:id="@+id/textAdminEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No appointments found."
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="center"
+                    android:padding="32dp"
+                    android:visibility="gone"/>
+
+                <!-- Appointments list -->
+                <LinearLayout
+                    android:id="@+id/adminAppointmentsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- TAB 2: Manage Services -->
+        <ScrollView
+            android:id="@+id/contentManageServices"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Header row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Manage Services" android:textSize="22sp" android:textStyle="bold" android:textColor="@color/text_primary"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add or remove dental services" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnAddService"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="+ Add Service"
+                        android:textSize="12sp"
+                        android:textColor="@color/white"
+                        android:background="@drawable/bg_button_teal"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/adminServicesList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- TAB 3: Clinic Availability -->
+        <ScrollView
+            android:id="@+id/contentClinicAvailability"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Clinic Availability" android:textSize="22sp" android:textStyle="bold" android:textColor="@color/text_primary" android:layout_marginBottom="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Set clinic open hours and days" android:textSize="12sp" android:textColor="@color/text_secondary" android:layout_marginBottom="20dp"/>
+
+                <!-- Day toggles -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_card" android:orientation="vertical" android:padding="16dp">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Open Days" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/text_primary" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Monday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tuesday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Wednesday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Thursday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Friday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Saturday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Sunday" android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <Switch android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" android:thumbTint="@color/teal_primary" android:trackTint="@color/teal_light"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_card" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Clinic Hours" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/text_primary" android:layout_marginBottom="12dp"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Opening time" android:textSize="14sp" android:textColor="@color/text_secondary"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="8:00 AM" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/teal_dark"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Closing time" android:textSize="14sp" android:textColor="@color/text_secondary"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5:00 PM" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/teal_dark"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- TAB 4: Registered Clients -->
+        <ScrollView
+            android:id="@+id/contentRegisteredClients"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Registered Clients" android:textSize="22sp" android:textStyle="bold" android:textColor="@color/text_primary" android:layout_marginBottom="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="All registered patient accounts" android:textSize="12sp" android:textColor="@color/text_secondary" android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:id="@+id/textClientsEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No clients registered yet."
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="center"
+                    android:padding="32dp"
+                    android:visibility="gone"/>
+
+                <LinearLayout
+                    android:id="@+id/adminClientsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+        </ScrollView>
+
+    </FrameLayout>
+
+</LinearLayout>

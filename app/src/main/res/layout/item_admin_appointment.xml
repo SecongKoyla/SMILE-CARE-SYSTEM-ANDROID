@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:orientation="vertical"
+    android:padding="14dp"
+    android:layout_marginBottom="10dp">
+
+    <!-- Top row: date badge + service info + status -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <!-- Date badge -->
+        <LinearLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_teal_pill"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/textAdminApptDay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="08"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/teal_dark"/>
+            <TextView
+                android:id="@+id/textAdminApptMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="APR"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:textColor="@color/teal_dark"/>
+        </LinearLayout>
+
+        <!-- Service + time -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginLeft="12dp">
+            <TextView
+                android:id="@+id/textAdminApptService"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Whitening"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"/>
+            <TextView
+                android:id="@+id/textAdminApptTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="08:00 AM"
+                android:textSize="12sp"
+                android:textColor="@color/teal_primary"/>
+        </LinearLayout>
+
+        <!-- Status badge -->
+        <TextView
+            android:id="@+id/textAdminApptStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Approved"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="@drawable/bg_status_approved"
+            android:textColor="@color/status_approved"/>
+    </LinearLayout>
+
+    <!-- Patient email -->
+    <TextView
+        android:id="@+id/textAdminApptEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="patient@email.com"
+        android:textSize="11sp"
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Divider -->
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginBottom="10dp"/>
+
+    <!-- Action buttons row 1: Approve / Complete / Pending / Cancel -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/btnAdminApprove"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:text="✓ Approve"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:background="@drawable/bg_action_btn_default"
+            android:textColor="@color/text_primary"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/btnAdminComplete"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:text="✦ Complete"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:background="@drawable/bg_action_btn_default"
+            android:textColor="@color/text_primary"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/btnAdminPending"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:text="⏳ Pending"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:background="@drawable/bg_action_btn_default"
+            android:textColor="@color/text_primary"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/btnAdminCancel"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:text="✕ Cancel"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:background="@drawable/bg_action_btn_default"
+            android:textColor="@color/text_primary"/>
+    </LinearLayout>
+
+    <!-- Delete button (separate row, red) -->
+    <TextView
+        android:id="@+id/btnAdminDelete"
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:text="🗑 Delete"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="@drawable/bg_delete_btn"
+        android:textColor="@color/status_cancelled"/>
+
+</LinearLayout>

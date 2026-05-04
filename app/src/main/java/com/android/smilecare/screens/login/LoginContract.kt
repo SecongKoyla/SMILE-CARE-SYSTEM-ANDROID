@@ -6,6 +6,7 @@ class LoginContract {
         fun showInvalidCredentialsMessage()
         fun showEmptyFieldsMessage()
         fun showHomeScreen()
+        fun showAdminScreen()
     }
 
     interface Presenter {

@@ -5,5 +5,10 @@ data class User(
     var lastName: String = "",
     var email: String = "",
     var password: String = "",
-    var photoUri: String = ""
+    var photoUri: String = "",
+    var role: UserRole = UserRole.USER
 )
+
+enum class UserRole {
+    USER, ADMIN
+}
