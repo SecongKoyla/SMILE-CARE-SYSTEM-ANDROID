@@ -322,10 +322,15 @@ class AdminActivity : AppCompatActivity(),
 
     override fun showAddServiceDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_service, null)
-        addServiceDialog = AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle("Add New Service")
             .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton("Add", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 manageServicesPresenter.addService(
                     name        = dialogView.findViewById<EditText>(R.id.etSvcName).text.toString(),
                     description = dialogView.findViewById<EditText>(R.id.etSvcDescription).text.toString(),
@@ -333,9 +338,12 @@ class AdminActivity : AppCompatActivity(),
                     durationMin = dialogView.findViewById<EditText>(R.id.etSvcDuration).text.toString(),
                     emoji       = dialogView.findViewById<EditText>(R.id.etSvcEmoji).text.toString()
                 )
+                // Dialog is dismissed only on success (presenter calls view.dismissDialog())
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
+
+        addServiceDialog = dialog
+        dialog.show()
     }
 
     override fun dismissDialog() { addServiceDialog?.dismiss() }

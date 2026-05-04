@@ -14,13 +14,7 @@ class CustomApp : Application() {
 
     val registeredUsers = mutableListOf<User>()
 
-    val services = mutableListOf(
-        DentalService("Cleaning", "A professional dental cleaning that removes plaque, tartar, and surface stains that regular brushing can't remove.", 600, 30, "🦷"),
-        DentalService("Filling", "A treatment used to repair cavities or damaged teeth. The decayed part is carefully removed, and the tooth is filled with a durable material.", 300, 45, "🔧"),
-        DentalService("Root Canal", "A procedure that treats infection inside the tooth by removing the damaged pulp, cleaning the area, and sealing it.", 900, 60, "🦷"),
-        DentalService("Whitening", "A safe and effective treatment that removes stains and discoloration caused by food, drinks, or aging.", 150, 45, "✨"),
-        DentalService("Tooth Extraction", "A procedure to safely remove a damaged, decayed, or problematic tooth. Helps relieve pain and prevent infection.", 2500, 60, "🦷")
-    )
+    val services = mutableListOf<DentalService>()
 
     val appointments = mutableListOf<Appointment>()
 
@@ -29,7 +23,51 @@ class CustomApp : Application() {
     override fun onCreate() {
         super.onCreate()
         loadUsers()
+        loadServices()
         loadAppointments()
+    }
+
+    private fun seedDefaultServices() {
+        services.clear()
+        services.addAll(
+            listOf(
+                DentalService(
+                    "Cleaning",
+                    "A professional dental cleaning that removes plaque, tartar, and surface stains that regular brushing can't remove.",
+                    600,
+                    30,
+                    "🦷"
+                ),
+                DentalService(
+                    "Filling",
+                    "A treatment used to repair cavities or damaged teeth. The decayed part is carefully removed, and the tooth is filled with a durable material.",
+                    300,
+                    45,
+                    "🔧"
+                ),
+                DentalService(
+                    "Root Canal",
+                    "A procedure that treats infection inside the tooth by removing the damaged pulp, cleaning the area, and sealing it.",
+                    900,
+                    60,
+                    "🦷"
+                ),
+                DentalService(
+                    "Whitening",
+                    "A safe and effective treatment that removes stains and discoloration caused by food, drinks, or aging.",
+                    150,
+                    45,
+                    "✨"
+                ),
+                DentalService(
+                    "Tooth Extraction",
+                    "A procedure to safely remove a damaged, decayed, or problematic tooth. Helps relieve pain and prevent infection.",
+                    2500,
+                    60,
+                    "🦷"
+                )
+            )
+        )
     }
 
     private fun loadUsers() {
@@ -80,6 +118,54 @@ class CustomApp : Application() {
             jsonArray.put(obj)
         }
         prefs.edit().putString("users", jsonArray.toString()).apply()
+    }
+
+    private fun loadServices() {
+        val servicesJson = prefs.getString("services", null)
+        if (servicesJson.isNullOrBlank()) {
+            seedDefaultServices()
+            saveServices()
+            return
+        }
+
+        val jsonArray = try {
+            org.json.JSONArray(servicesJson)
+        } catch (_: Exception) {
+            prefs.edit().remove("services").apply()
+            org.json.JSONArray()
+        }
+
+        services.clear()
+        for (i in 0 until jsonArray.length()) {
+            val obj = jsonArray.optJSONObject(i) ?: continue
+            val name = obj.optString("name", "").trim()
+            val description = obj.optString("description", "").trim()
+            val price = obj.optInt("price", -1)
+            val duration = obj.optInt("durationMinutes", -1)
+            val emoji = obj.optString("emoji", "🦷").ifBlank { "🦷" }
+
+            if (name.isBlank() || description.isBlank() || price < 0 || duration <= 0) continue
+            services.add(DentalService(name, description, price, duration, emoji))
+        }
+
+        if (services.isEmpty()) {
+            seedDefaultServices()
+            saveServices()
+        }
+    }
+
+    fun saveServices() {
+        val jsonArray = org.json.JSONArray()
+        for (svc in services) {
+            val obj = org.json.JSONObject()
+            obj.put("name", svc.name)
+            obj.put("description", svc.description)
+            obj.put("price", svc.price)
+            obj.put("durationMinutes", svc.durationMinutes)
+            obj.put("emoji", svc.emoji)
+            jsonArray.put(obj)
+        }
+        prefs.edit().putString("services", jsonArray.toString()).apply()
     }
 
     private fun loadAppointments() {
