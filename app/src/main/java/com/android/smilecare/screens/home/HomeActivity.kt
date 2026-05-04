@@ -127,7 +127,28 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
     override fun showGreeting(name: String, greeting: String) {
         findViewById<TextView>(R.id.textGreeting).text = "$greeting, $name!"
-        val count = (application as CustomApp).appointments.size
+
+        val app = application as CustomApp
+        val userEmail = app.loggedInUser?.email
+        val now = java.util.Date()
+        val calNow = java.util.Calendar.getInstance()
+        val currentMonth = calNow.get(java.util.Calendar.MONTH)
+        val currentYear = calNow.get(java.util.Calendar.YEAR)
+
+        val count = if (userEmail.isNullOrBlank()) {
+            0
+        } else {
+            app.appointments.count { appt ->
+                if (!appt.userEmail.equals(userEmail, ignoreCase = true)) return@count false
+                if (appt.status == com.android.smilecare.data.AppointmentStatus.CANCELLED) return@count false
+                if (!appt.date.after(now)) return@count false
+
+                val cal = java.util.Calendar.getInstance()
+                cal.time = appt.date
+                cal.get(java.util.Calendar.MONTH) == currentMonth &&
+                    cal.get(java.util.Calendar.YEAR) == currentYear
+            }
+        }
         findViewById<TextView>(R.id.textAppointmentCount).text =
             "You have $count upcoming appointment${if (count != 1) "s" else ""} this month."
     }
