@@ -356,6 +356,19 @@ class AdminActivity : AppCompatActivity(),
     private fun buildClinicAvailabilityView() {
         val app = application as CustomApp
 
+        // Pending (unsaved) state – only persisted when admin presses Save.
+        val pendingOpenDays = app.clinicOpenDays.copyOf()
+        var pendingOpeningMinutes = app.clinicOpeningMinutes
+        var pendingClosingMinutes = app.clinicClosingMinutes
+        var hasUnsavedChanges = false
+
+        val btnSave = findViewById<Button>(R.id.btnSaveClinicSchedule)
+        fun setDirty(dirty: Boolean) {
+            hasUnsavedChanges = dirty
+            btnSave.isEnabled = dirty
+            btnSave.alpha = if (dirty) 1f else 0.6f
+        }
+
         val swMon = findViewById<Switch>(R.id.switchMonday)
         val swTue = findViewById<Switch>(R.id.switchTuesday)
         val swWed = findViewById<Switch>(R.id.switchWednesday)
@@ -377,11 +390,11 @@ class AdminActivity : AppCompatActivity(),
 
         fun bindDaySwitch(dayIndexMon0: Int, sw: Switch) {
             sw.setOnCheckedChangeListener(null)
-            sw.isChecked = app.clinicOpenDays.getOrElse(dayIndexMon0) { false }
+            sw.isChecked = pendingOpenDays.getOrElse(dayIndexMon0) { false }
             sw.setOnCheckedChangeListener { _, isChecked ->
                 if (dayIndexMon0 in 0..6) {
-                    app.clinicOpenDays[dayIndexMon0] = isChecked
-                    app.saveClinicSchedule()
+                    pendingOpenDays[dayIndexMon0] = isChecked
+                    setDirty(true)
                 }
             }
         }
@@ -394,37 +407,54 @@ class AdminActivity : AppCompatActivity(),
         bindDaySwitch(5, swSat)
         bindDaySwitch(6, swSun)
 
-        openingText.text = formatMinutes(app.clinicOpeningMinutes)
-        closingText.text = formatMinutes(app.clinicClosingMinutes)
+        openingText.text = formatMinutes(pendingOpeningMinutes)
+        closingText.text = formatMinutes(pendingClosingMinutes)
+
+        setDirty(false)
 
         openingText.setOnClickListener {
-            val h = app.clinicOpeningMinutes / 60
-            val m = app.clinicOpeningMinutes % 60
+            val h = pendingOpeningMinutes / 60
+            val m = pendingOpeningMinutes % 60
             TimePickerDialog(this, { _, hourOfDay, minute ->
                 val newOpen = hourOfDay * 60 + minute
-                if (newOpen >= app.clinicClosingMinutes) {
+                if (newOpen >= pendingClosingMinutes) {
                     toast("Opening time must be before closing time")
                     return@TimePickerDialog
                 }
-                app.clinicOpeningMinutes = newOpen
-                app.saveClinicSchedule()
+                pendingOpeningMinutes = newOpen
                 openingText.text = formatMinutes(newOpen)
+                setDirty(true)
             }, h, m, false).show()
         }
 
         closingText.setOnClickListener {
-            val h = app.clinicClosingMinutes / 60
-            val m = app.clinicClosingMinutes % 60
+            val h = pendingClosingMinutes / 60
+            val m = pendingClosingMinutes % 60
             TimePickerDialog(this, { _, hourOfDay, minute ->
                 val newClose = hourOfDay * 60 + minute
-                if (newClose <= app.clinicOpeningMinutes) {
+                if (newClose <= pendingOpeningMinutes) {
                     toast("Closing time must be after opening time")
                     return@TimePickerDialog
                 }
-                app.clinicClosingMinutes = newClose
-                app.saveClinicSchedule()
+                pendingClosingMinutes = newClose
                 closingText.text = formatMinutes(newClose)
+                setDirty(true)
             }, h, m, false).show()
+        }
+
+        btnSave.setOnClickListener {
+            // Validate and persist
+            if (pendingOpeningMinutes !in 0..(24 * 60) || pendingClosingMinutes !in 0..(24 * 60) || pendingOpeningMinutes >= pendingClosingMinutes) {
+                toast("Clinic hours are not valid")
+                return@setOnClickListener
+            }
+
+            app.clinicOpenDays = pendingOpenDays.copyOf()
+            app.clinicOpeningMinutes = pendingOpeningMinutes
+            app.clinicClosingMinutes = pendingClosingMinutes
+            app.saveClinicSchedule()
+            toast("Clinic schedule saved")
+            setDirty(false)
         }
     }
 
