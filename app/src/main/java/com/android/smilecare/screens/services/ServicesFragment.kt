@@ -10,9 +10,13 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
+import com.android.smilecare.data.DentalService
 import com.android.smilecare.screens.home.HomeActivity
 
-class ServicesFragment : Fragment() {
+class ServicesFragment : Fragment(), ServicesContract.View {
+
+    private lateinit var presenter: ServicesContract.Presenter
+    private lateinit var servicesList: LinearLayout
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_services, container, false)
@@ -20,12 +24,16 @@ class ServicesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val app = requireActivity().application as CustomApp
-        val list = view.findViewById<LinearLayout>(R.id.servicesList)
+        servicesList = view.findViewById(R.id.servicesList)
+        presenter = ServicesPresenter(this, ServicesModel(requireActivity().application as CustomApp))
+        presenter.loadServices()
+    }
 
-        app.services.forEach { service ->
+    override fun showServices(services: List<DentalService>) {
+        servicesList.removeAllViews()
+        services.forEach { service ->
             val item = LayoutInflater.from(requireContext())
-                .inflate(R.layout.item_service, list, false)
+                .inflate(R.layout.item_service, servicesList, false)
 
             item.findViewById<TextView>(R.id.textServiceEmoji).text = service.emoji
             item.findViewById<TextView>(R.id.textServiceName).text = service.name
@@ -38,7 +46,7 @@ class ServicesFragment : Fragment() {
                 (activity as? HomeActivity)?.navigateToBookAppointment(service.name)
             }
 
-            list.addView(item)
+            servicesList.addView(item)
         }
     }
 }

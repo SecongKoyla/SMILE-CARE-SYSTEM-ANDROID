@@ -15,6 +15,9 @@ import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
+import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityContract
+import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityModel
+import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityPresenter
 import com.android.smilecare.screens.login.LoginActivity
 import com.android.smilecare.utils.toast
 import java.text.SimpleDateFormat
@@ -23,12 +26,14 @@ import java.util.*
 class AdminActivity : AppCompatActivity(),
     AdminContract.AllAppointmentsView,
     AdminContract.ManageServicesView,
-    AdminContract.RegisteredClientsView {
+    AdminContract.RegisteredClientsView,
+    ClinicAvailabilityContract.View {
 
     private lateinit var model: AdminModel
     private lateinit var allApptPresenter: AllAppointmentsPresenter
     private lateinit var manageServicesPresenter: ManageServicesPresenter
     private lateinit var registeredClientsPresenter: RegisteredClientsPresenter
+    private lateinit var clinicAvailabilityPresenter: ClinicAvailabilityContract.Presenter
 
     // Tab buttons
     private lateinit var tabAllAppointments: TextView
@@ -53,6 +58,7 @@ class AdminActivity : AppCompatActivity(),
         allApptPresenter = AllAppointmentsPresenter(this, model)
         manageServicesPresenter = ManageServicesPresenter(this, model)
         registeredClientsPresenter = RegisteredClientsPresenter(this, model)
+        clinicAvailabilityPresenter = ClinicAvailabilityPresenter(this, ClinicAvailabilityModel(application as CustomApp))
 
         bindViews()
         setupTopBar()
@@ -354,31 +360,14 @@ class AdminActivity : AppCompatActivity(),
     // ══════════════════════════════════════════════════════════════════════════
 
     private fun buildClinicAvailabilityView() {
-        val app = application as CustomApp
+        clinicAvailabilityPresenter.load()
+    }
 
-        // Pending (unsaved) state – only persisted when admin presses Save.
-        val pendingOpenDays = app.clinicOpenDays.copyOf()
-        var pendingOpeningMinutes = app.clinicOpeningMinutes
-        var pendingClosingMinutes = app.clinicClosingMinutes
-        var hasUnsavedChanges = false
-
+    override fun render(state: ClinicAvailabilityContract.State) {
         val btnSave = findViewById<Button>(R.id.btnSaveClinicSchedule)
-        fun setDirty(dirty: Boolean) {
-            hasUnsavedChanges = dirty
-            btnSave.isEnabled = dirty
-            btnSave.alpha = if (dirty) 1f else 0.6f
-        }
-
-        val swMon = findViewById<Switch>(R.id.switchMonday)
-        val swTue = findViewById<Switch>(R.id.switchTuesday)
-        val swWed = findViewById<Switch>(R.id.switchWednesday)
-        val swThu = findViewById<Switch>(R.id.switchThursday)
-        val swFri = findViewById<Switch>(R.id.switchFriday)
-        val swSat = findViewById<Switch>(R.id.switchSaturday)
-        val swSun = findViewById<Switch>(R.id.switchSunday)
-
-        val openingText = findViewById<TextView>(R.id.textClinicOpeningTime)
-        val closingText = findViewById<TextView>(R.id.textClinicClosingTime)
+        btnSave.isEnabled = state.hasUnsavedChanges
+        btnSave.alpha = if (state.hasUnsavedChanges) 1f else 0.6f
+        btnSave.setOnClickListener { clinicAvailabilityPresenter.onSaveClicked() }
 
         fun formatMinutes(totalMinutes: Int): String {
             val cal = Calendar.getInstance()
@@ -388,73 +377,42 @@ class AdminActivity : AppCompatActivity(),
             return fmt.format(cal.time)
         }
 
-        fun bindDaySwitch(dayIndexMon0: Int, sw: Switch) {
+        fun bindDaySwitch(dayIndexMon0: Int, swId: Int) {
+            val sw = findViewById<Switch>(swId)
             sw.setOnCheckedChangeListener(null)
-            sw.isChecked = pendingOpenDays.getOrElse(dayIndexMon0) { false }
+            sw.isChecked = state.openDaysMon0.getOrElse(dayIndexMon0) { false }
             sw.setOnCheckedChangeListener { _, isChecked ->
-                if (dayIndexMon0 in 0..6) {
-                    pendingOpenDays[dayIndexMon0] = isChecked
-                    setDirty(true)
-                }
+                clinicAvailabilityPresenter.onDayChanged(dayIndexMon0, isChecked)
             }
         }
 
-        bindDaySwitch(0, swMon)
-        bindDaySwitch(1, swTue)
-        bindDaySwitch(2, swWed)
-        bindDaySwitch(3, swThu)
-        bindDaySwitch(4, swFri)
-        bindDaySwitch(5, swSat)
-        bindDaySwitch(6, swSun)
+        bindDaySwitch(0, R.id.switchMonday)
+        bindDaySwitch(1, R.id.switchTuesday)
+        bindDaySwitch(2, R.id.switchWednesday)
+        bindDaySwitch(3, R.id.switchThursday)
+        bindDaySwitch(4, R.id.switchFriday)
+        bindDaySwitch(5, R.id.switchSaturday)
+        bindDaySwitch(6, R.id.switchSunday)
 
-        openingText.text = formatMinutes(pendingOpeningMinutes)
-        closingText.text = formatMinutes(pendingClosingMinutes)
-
-        setDirty(false)
+        val openingText = findViewById<TextView>(R.id.textClinicOpeningTime)
+        val closingText = findViewById<TextView>(R.id.textClinicClosingTime)
+        openingText.text = formatMinutes(state.openingMinutes)
+        closingText.text = formatMinutes(state.closingMinutes)
 
         openingText.setOnClickListener {
-            val h = pendingOpeningMinutes / 60
-            val m = pendingOpeningMinutes % 60
+            val h = state.openingMinutes / 60
+            val m = state.openingMinutes % 60
             TimePickerDialog(this, { _, hourOfDay, minute ->
-                val newOpen = hourOfDay * 60 + minute
-                if (newOpen >= pendingClosingMinutes) {
-                    toast("Opening time must be before closing time")
-                    return@TimePickerDialog
-                }
-                pendingOpeningMinutes = newOpen
-                openingText.text = formatMinutes(newOpen)
-                setDirty(true)
+                clinicAvailabilityPresenter.onOpeningMinutesPicked(hourOfDay * 60 + minute)
             }, h, m, false).show()
         }
 
         closingText.setOnClickListener {
-            val h = pendingClosingMinutes / 60
-            val m = pendingClosingMinutes % 60
+            val h = state.closingMinutes / 60
+            val m = state.closingMinutes % 60
             TimePickerDialog(this, { _, hourOfDay, minute ->
-                val newClose = hourOfDay * 60 + minute
-                if (newClose <= pendingOpeningMinutes) {
-                    toast("Closing time must be after opening time")
-                    return@TimePickerDialog
-                }
-                pendingClosingMinutes = newClose
-                closingText.text = formatMinutes(newClose)
-                setDirty(true)
+                clinicAvailabilityPresenter.onClosingMinutesPicked(hourOfDay * 60 + minute)
             }, h, m, false).show()
-        }
-
-        btnSave.setOnClickListener {
-            // Validate and persist
-            if (pendingOpeningMinutes !in 0..(24 * 60) || pendingClosingMinutes !in 0..(24 * 60) || pendingOpeningMinutes >= pendingClosingMinutes) {
-                toast("Clinic hours are not valid")
-                return@setOnClickListener
-            }
-
-            app.clinicOpenDays = pendingOpenDays.copyOf()
-            app.clinicOpeningMinutes = pendingOpeningMinutes
-            app.clinicClosingMinutes = pendingClosingMinutes
-            app.saveClinicSchedule()
-            toast("Clinic schedule saved")
-            setDirty(false)
         }
     }
 

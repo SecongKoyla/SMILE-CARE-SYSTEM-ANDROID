@@ -10,43 +10,22 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
-import com.android.smilecare.data.Appointment
-import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.utils.toast
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.CompositeDateValidator
 import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
-import java.text.SimpleDateFormat
 import java.util.*
 
-class BookAppointmentFragment : Fragment() {
+class BookAppointmentFragment : Fragment(), BookAppointmentContract.View {
 
-    private var selectedService: DentalService? = null
-    private var selectedDate: Calendar? = null
-    private var selectedTime: String? = null
+    private lateinit var presenter: BookAppointmentContract.Presenter
 
-    private fun dayIndexMon0(dayOfWeek: Int): Int = when (dayOfWeek) {
-        Calendar.MONDAY -> 0
-        Calendar.TUESDAY -> 1
-        Calendar.WEDNESDAY -> 2
-        Calendar.THURSDAY -> 3
-        Calendar.FRIDAY -> 4
-        Calendar.SATURDAY -> 5
-        Calendar.SUNDAY -> 6
-        else -> -1
-    }
-
-    private fun isClinicOpenOn(date: Calendar, app: CustomApp): Boolean {
-        val idx = dayIndexMon0(date.get(Calendar.DAY_OF_WEEK))
-        if (idx !in 0..6) return false
-        return app.clinicOpenDays.getOrElse(idx) { false }
-    }
-
-    private fun dayName(date: Calendar): String {
-        return SimpleDateFormat("EEEE", Locale.getDefault()).format(date.time)
-    }
+    private lateinit var serviceGroup: RadioGroup
+    private lateinit var textSelectedDate: TextView
+    private lateinit var timeSlotsContainer: ViewGroup
+    private lateinit var timeSlotsSection: View
 
     private class ClinicOpenDaysValidator(
         private val openDaysMon0: BooleanArray
@@ -87,27 +66,6 @@ class BookAppointmentFragment : Fragment() {
         }
     }
 
-    private fun getTimeSlots(app: CustomApp): List<String> {
-        val open = app.clinicOpeningMinutes
-        val close = app.clinicClosingMinutes
-        if (open < 0 || close < 0 || open >= close) return emptyList()
-
-        val fmt = SimpleDateFormat("h:mm a", Locale.getDefault())
-        val cal = Calendar.getInstance()
-        val slots = mutableListOf<String>()
-        var mins = open
-        val stepMinutes = 60
-        if (stepMinutes <= 0) return emptyList()
-        // Use < close so you can't book *at* the closing time.
-        while (mins < close) {
-            cal.set(Calendar.HOUR_OF_DAY, mins / 60)
-            cal.set(Calendar.MINUTE, mins % 60)
-            slots.add(fmt.format(cal.time))
-            mins += stepMinutes
-        }
-        return slots
-    }
-
     companion object {
         private const val ARG_PRESELECT_SERVICE_NAME = "preselect_service_name"
 
@@ -126,42 +84,30 @@ class BookAppointmentFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val app = requireActivity().application as CustomApp
         val preselectedServiceName = arguments?.getString(ARG_PRESELECT_SERVICE_NAME)
 
-        // Service selection
-        val serviceGroup = view.findViewById<RadioGroup>(R.id.radioGroupServices)
-        app.services.forEach { service ->
-            val rb = RadioButton(requireContext()).apply {
-                text = "${service.emoji} ${service.name}  ·  ₱${service.price}"
-                tag = service
-                setTextColor(resources.getColor(R.color.text_primary, null))
-                textSize = 14f
-                setPadding(24, 20, 24, 20)
-            }
-            serviceGroup.addView(rb)
-        }
+        presenter = BookAppointmentPresenter(
+            this,
+            BookAppointmentModel(requireActivity().application as CustomApp)
+        )
 
+        serviceGroup = view.findViewById(R.id.radioGroupServices)
+        textSelectedDate = view.findViewById(R.id.textSelectedDate)
+        timeSlotsContainer = view.findViewById(R.id.timeSlotsContainer)
+        timeSlotsSection = view.findViewById(R.id.timeSlotsSection)
+
+        presenter.onViewReady(preselectedServiceName)
+
+        // Service selection
         serviceGroup.setOnCheckedChangeListener { group, checkedId ->
             val rb = group.findViewById<RadioButton>(checkedId)
-            selectedService = rb?.tag as? DentalService
-        }
-
-        if (!preselectedServiceName.isNullOrBlank()) {
-            for (i in 0 until serviceGroup.childCount) {
-                val rb = serviceGroup.getChildAt(i) as? RadioButton ?: continue
-                val service = rb.tag as? DentalService ?: continue
-                if (service.name.equals(preselectedServiceName, ignoreCase = true)) {
-                    rb.isChecked = true
-                    break
-                }
-            }
+            presenter.onServiceSelected(rb?.tag as? DentalService)
         }
 
         // Date picker
-        val textSelectedDate = view.findViewById<TextView>(R.id.textSelectedDate)
         view.findViewById<Button>(R.id.buttonPickDate).setOnClickListener {
-            if (app.clinicOpenDays.none { it }) {
+            val openDays = presenter.getOpenDaysMon0ForValidator()
+            if (openDays.none { it }) {
                 toast("Clinic is closed all week")
                 return@setOnClickListener
             }
@@ -171,7 +117,7 @@ class BookAppointmentFragment : Fragment() {
                     CompositeDateValidator.allOf(
                         listOf(
                             DateValidatorPointForward.now(),
-                            ClinicOpenDaysValidator(app.clinicOpenDays.copyOf())
+                            ClinicOpenDaysValidator(openDays)
                         )
                     )
                 )
@@ -192,17 +138,7 @@ class BookAppointmentFragment : Fragment() {
                     set(Calendar.MILLISECOND, 0)
                 }
 
-                // Extra safety: should already be blocked visually by the validator.
-                if (!isClinicOpenOn(picked, app)) {
-                    toast("Clinic is closed on ${dayName(picked)}")
-                    return@addOnPositiveButtonClickListener
-                }
-
-                selectedDate = picked
-                selectedTime = null
-                val fmt = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
-                textSelectedDate.text = fmt.format(selectedDate!!.time)
-                loadTimeSlots(view)
+                presenter.onDatePicked(picked)
             }
 
             picker.show(parentFragmentManager, "book_date_picker")
@@ -210,79 +146,8 @@ class BookAppointmentFragment : Fragment() {
 
         // Confirm
         view.findViewById<Button>(R.id.buttonConfirm).setOnClickListener {
-            when {
-                selectedService == null -> toast("Please select a service.")
-                selectedDate == null -> toast("Please select a date.")
-                selectedTime == null -> toast("Please select a time slot.")
-                else -> {
-                    if (!isClinicOpenOn(selectedDate!!, app)) {
-                        toast("Clinic is closed on ${dayName(selectedDate!!)}")
-                        return@setOnClickListener
-                    }
-                    val appt = Appointment(
-                        userEmail = app.loggedInUser?.email.orEmpty(),
-                        service = selectedService!!,
-                        date = selectedDate!!.time,
-                        timeSlot = selectedTime!!,
-                        status = AppointmentStatus.PENDING
-                    )
-                    app.appointments.add(appt)
-                    app.saveAppointments()
-                    toast("Appointment booked successfully!")
-                    resetForm(view)
-                }
-            }
+            presenter.onConfirmClicked()
         }
-    }
-
-    private fun loadTimeSlots(view: View) {
-        val container = view.findViewById<ViewGroup>(R.id.timeSlotsContainer)
-        container.removeAllViews()
-        val app = requireActivity().application as CustomApp
-
-        if (selectedDate == null) {
-            view.findViewById<View>(R.id.timeSlotsSection).visibility = View.GONE
-            return
-        }
-
-        val timeSlots = getTimeSlots(app)
-        if (timeSlots.isEmpty()) {
-            toast("Clinic hours are not set correctly")
-            view.findViewById<View>(R.id.timeSlotsSection).visibility = View.GONE
-            return
-        }
-
-        val bookedTimes = app.appointments
-            .filter {
-                val cal = Calendar.getInstance().apply { time = it.date }
-                val sel = selectedDate!!
-                cal.get(Calendar.YEAR) == sel.get(Calendar.YEAR) &&
-                cal.get(Calendar.DAY_OF_YEAR) == sel.get(Calendar.DAY_OF_YEAR)
-                        && it.status != AppointmentStatus.CANCELLED
-            }
-            .map { it.timeSlot }
-
-        timeSlots.forEach { slot ->
-            val isBooked = bookedTimes.contains(slot)
-            val btn = Button(requireContext()).apply {
-                text = slot
-                isEnabled = !isBooked
-                setBackgroundResource(if (isBooked) R.drawable.bg_time_slot_booked else R.drawable.bg_time_slot)
-                setTextColor(resources.getColor(if (isBooked) R.color.text_secondary else R.color.text_primary, null))
-                val params = ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    setMargins(8, 8, 8, 8)
-                }
-                layoutParams = params
-            }
-            if (!isBooked) {
-                btn.setOnClickListener {
-                    selectedTime = slot
-                    highlightSelected(container, btn)
-                }
-            }
-            container.addView(btn)
-        }
-        view.findViewById<View>(R.id.timeSlotsSection).visibility = View.VISIBLE
     }
 
     private fun highlightSelected(container: ViewGroup, selected: Button) {
@@ -297,13 +162,71 @@ class BookAppointmentFragment : Fragment() {
         selected.setTextColor(resources.getColor(R.color.white, null))
     }
 
-    private fun resetForm(view: View) {
-        selectedService = null
-        selectedDate = null
-        selectedTime = null
-        view.findViewById<RadioGroup>(R.id.radioGroupServices).clearCheck()
-        view.findViewById<TextView>(R.id.textSelectedDate).text = "No date selected"
-        view.findViewById<ViewGroup>(R.id.timeSlotsContainer).removeAllViews()
-        view.findViewById<View>(R.id.timeSlotsSection).visibility = View.GONE
+    // ── MVP View ────────────────────────────────────────────────────────────
+
+    override fun showMessage(message: String) = toast(message)
+
+    override fun showServices(services: List<DentalService>, preselectedServiceName: String?) {
+        serviceGroup.removeAllViews()
+        services.forEach { service ->
+            val rb = RadioButton(requireContext()).apply {
+                text = "${service.emoji} ${service.name}  ·  ₱${service.price}"
+                tag = service
+                setTextColor(resources.getColor(R.color.text_primary, null))
+                textSize = 14f
+                setPadding(24, 20, 24, 20)
+            }
+            serviceGroup.addView(rb)
+        }
+
+        if (!preselectedServiceName.isNullOrBlank()) {
+            for (i in 0 until serviceGroup.childCount) {
+                val rb = serviceGroup.getChildAt(i) as? RadioButton ?: continue
+                val service = rb.tag as? DentalService ?: continue
+                if (service.name.equals(preselectedServiceName, ignoreCase = true)) {
+                    rb.isChecked = true
+                    presenter.onServiceSelected(service)
+                    break
+                }
+            }
+        }
+    }
+
+    override fun showSelectedDate(formatted: String) {
+        textSelectedDate.text = formatted
+    }
+
+    override fun showTimeSlots(timeSlots: List<BookAppointmentContract.TimeSlot>) {
+        timeSlotsContainer.removeAllViews()
+        timeSlots.forEach { slot ->
+            val btn = Button(requireContext()).apply {
+                text = slot.label
+                isEnabled = !slot.isBooked
+                setBackgroundResource(if (slot.isBooked) R.drawable.bg_time_slot_booked else R.drawable.bg_time_slot)
+                setTextColor(resources.getColor(if (slot.isBooked) R.color.text_secondary else R.color.text_primary, null))
+                val params = ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    setMargins(8, 8, 8, 8)
+                }
+                layoutParams = params
+            }
+            if (!slot.isBooked) {
+                btn.setOnClickListener {
+                    presenter.onTimeSlotSelected(slot.label)
+                    highlightSelected(timeSlotsContainer, btn)
+                }
+            }
+            timeSlotsContainer.addView(btn)
+        }
+    }
+
+    override fun setTimeSlotsSectionVisible(visible: Boolean) {
+        timeSlotsSection.visibility = if (visible) View.VISIBLE else View.GONE
+    }
+
+    override fun resetForm() {
+        serviceGroup.clearCheck()
+        textSelectedDate.text = "No date selected"
+        timeSlotsContainer.removeAllViews()
+        timeSlotsSection.visibility = View.GONE
     }
 }
