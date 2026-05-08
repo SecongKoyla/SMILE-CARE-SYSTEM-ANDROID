@@ -1,7 +1,8 @@
 package com.android.smilecare.screens.bookappointment
 
-import android.app.DatePickerDialog
 import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,10 @@ import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.utils.toast
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.CompositeDateValidator
+import com.google.android.material.datepicker.DateValidatorPointForward
+import com.google.android.material.datepicker.MaterialDatePicker
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,6 +46,45 @@ class BookAppointmentFragment : Fragment() {
 
     private fun dayName(date: Calendar): String {
         return SimpleDateFormat("EEEE", Locale.getDefault()).format(date.time)
+    }
+
+    private class ClinicOpenDaysValidator(
+        private val openDaysMon0: BooleanArray
+    ) : CalendarConstraints.DateValidator {
+
+        override fun isValid(date: Long): Boolean {
+            // MaterialDatePicker provides UTC-based midnight timestamps.
+            val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            utcCal.timeInMillis = date
+            val idx = when (utcCal.get(Calendar.DAY_OF_WEEK)) {
+                Calendar.MONDAY -> 0
+                Calendar.TUESDAY -> 1
+                Calendar.WEDNESDAY -> 2
+                Calendar.THURSDAY -> 3
+                Calendar.FRIDAY -> 4
+                Calendar.SATURDAY -> 5
+                Calendar.SUNDAY -> 6
+                else -> -1
+            }
+            return idx in 0..6 && openDaysMon0.getOrElse(idx) { false }
+        }
+
+        override fun writeToParcel(dest: Parcel, flags: Int) {
+            dest.writeBooleanArray(openDaysMon0)
+        }
+
+        override fun describeContents(): Int = 0
+
+        companion object {
+            @JvmField
+            val CREATOR: Parcelable.Creator<ClinicOpenDaysValidator> = object : Parcelable.Creator<ClinicOpenDaysValidator> {
+                override fun createFromParcel(source: Parcel): ClinicOpenDaysValidator {
+                    return ClinicOpenDaysValidator(source.createBooleanArray() ?: BooleanArray(7))
+                }
+
+                override fun newArray(size: Int): Array<ClinicOpenDaysValidator?> = arrayOfNulls(size)
+            }
+        }
     }
 
     private fun getTimeSlots(app: CustomApp): List<String> {
@@ -117,16 +161,41 @@ class BookAppointmentFragment : Fragment() {
         // Date picker
         val textSelectedDate = view.findViewById<TextView>(R.id.textSelectedDate)
         view.findViewById<Button>(R.id.buttonPickDate).setOnClickListener {
-            val cal = Calendar.getInstance()
-            val dialog = DatePickerDialog(requireContext(), { _, y, m, d ->
+            if (app.clinicOpenDays.none { it }) {
+                toast("Clinic is closed all week")
+                return@setOnClickListener
+            }
+
+            val constraints = CalendarConstraints.Builder()
+                .setValidator(
+                    CompositeDateValidator.allOf(
+                        listOf(
+                            DateValidatorPointForward.now(),
+                            ClinicOpenDaysValidator(app.clinicOpenDays.copyOf())
+                        )
+                    )
+                )
+                .build()
+
+            val picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select date")
+                .setCalendarConstraints(constraints)
+                .build()
+
+            picker.addOnPositiveButtonClickListener { selectionUtcMillis: Long? ->
+                val sel = selectionUtcMillis ?: return@addOnPositiveButtonClickListener
+                val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = sel }
+
+                // Convert from UTC day to local day to avoid off-by-one in some timezones.
                 val picked = Calendar.getInstance().apply {
-                    set(y, m, d, 0, 0, 0)
+                    set(utcCal.get(Calendar.YEAR), utcCal.get(Calendar.MONTH), utcCal.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
                     set(Calendar.MILLISECOND, 0)
                 }
 
+                // Extra safety: should already be blocked visually by the validator.
                 if (!isClinicOpenOn(picked, app)) {
                     toast("Clinic is closed on ${dayName(picked)}")
-                    return@DatePickerDialog
+                    return@addOnPositiveButtonClickListener
                 }
 
                 selectedDate = picked
@@ -134,9 +203,9 @@ class BookAppointmentFragment : Fragment() {
                 val fmt = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
                 textSelectedDate.text = fmt.format(selectedDate!!.time)
                 loadTimeSlots(view)
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
-            dialog.datePicker.minDate = System.currentTimeMillis() - 1000
-            dialog.show()
+            }
+
+            picker.show(parentFragmentManager, "book_date_picker")
         }
 
         // Confirm
