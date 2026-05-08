@@ -2,6 +2,7 @@ package com.android.smilecare.screens.admin
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
@@ -14,6 +15,9 @@ import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
+import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityContract
+import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityModel
+import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityPresenter
 import com.android.smilecare.screens.login.LoginActivity
 import com.android.smilecare.utils.toast
 import java.text.SimpleDateFormat
@@ -22,12 +26,14 @@ import java.util.*
 class AdminActivity : AppCompatActivity(),
     AdminContract.AllAppointmentsView,
     AdminContract.ManageServicesView,
-    AdminContract.RegisteredClientsView {
+    AdminContract.RegisteredClientsView,
+    ClinicAvailabilityContract.View {
 
     private lateinit var model: AdminModel
     private lateinit var allApptPresenter: AllAppointmentsPresenter
     private lateinit var manageServicesPresenter: ManageServicesPresenter
     private lateinit var registeredClientsPresenter: RegisteredClientsPresenter
+    private lateinit var clinicAvailabilityPresenter: ClinicAvailabilityContract.Presenter
 
     // Tab buttons
     private lateinit var tabAllAppointments: TextView
@@ -52,6 +58,7 @@ class AdminActivity : AppCompatActivity(),
         allApptPresenter = AllAppointmentsPresenter(this, model)
         manageServicesPresenter = ManageServicesPresenter(this, model)
         registeredClientsPresenter = RegisteredClientsPresenter(this, model)
+        clinicAvailabilityPresenter = ClinicAvailabilityPresenter(this, ClinicAvailabilityModel(application as CustomApp))
 
         bindViews()
         setupTopBar()
@@ -353,7 +360,60 @@ class AdminActivity : AppCompatActivity(),
     // ══════════════════════════════════════════════════════════════════════════
 
     private fun buildClinicAvailabilityView() {
-        // Content is static XML — nothing dynamic needed yet
+        clinicAvailabilityPresenter.load()
+    }
+
+    override fun render(state: ClinicAvailabilityContract.State) {
+        val btnSave = findViewById<Button>(R.id.btnSaveClinicSchedule)
+        btnSave.isEnabled = state.hasUnsavedChanges
+        btnSave.alpha = if (state.hasUnsavedChanges) 1f else 0.6f
+        btnSave.setOnClickListener { clinicAvailabilityPresenter.onSaveClicked() }
+
+        fun formatMinutes(totalMinutes: Int): String {
+            val cal = Calendar.getInstance()
+            cal.set(Calendar.HOUR_OF_DAY, totalMinutes / 60)
+            cal.set(Calendar.MINUTE, totalMinutes % 60)
+            val fmt = SimpleDateFormat("h:mm a", Locale.getDefault())
+            return fmt.format(cal.time)
+        }
+
+        fun bindDaySwitch(dayIndexMon0: Int, swId: Int) {
+            val sw = findViewById<Switch>(swId)
+            sw.setOnCheckedChangeListener(null)
+            sw.isChecked = state.openDaysMon0.getOrElse(dayIndexMon0) { false }
+            sw.setOnCheckedChangeListener { _, isChecked ->
+                clinicAvailabilityPresenter.onDayChanged(dayIndexMon0, isChecked)
+            }
+        }
+
+        bindDaySwitch(0, R.id.switchMonday)
+        bindDaySwitch(1, R.id.switchTuesday)
+        bindDaySwitch(2, R.id.switchWednesday)
+        bindDaySwitch(3, R.id.switchThursday)
+        bindDaySwitch(4, R.id.switchFriday)
+        bindDaySwitch(5, R.id.switchSaturday)
+        bindDaySwitch(6, R.id.switchSunday)
+
+        val openingText = findViewById<TextView>(R.id.textClinicOpeningTime)
+        val closingText = findViewById<TextView>(R.id.textClinicClosingTime)
+        openingText.text = formatMinutes(state.openingMinutes)
+        closingText.text = formatMinutes(state.closingMinutes)
+
+        openingText.setOnClickListener {
+            val h = state.openingMinutes / 60
+            val m = state.openingMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                clinicAvailabilityPresenter.onOpeningMinutesPicked(hourOfDay * 60 + minute)
+            }, h, m, false).show()
+        }
+
+        closingText.setOnClickListener {
+            val h = state.closingMinutes / 60
+            val m = state.closingMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                clinicAvailabilityPresenter.onClosingMinutesPicked(hourOfDay * 60 + minute)
+            }, h, m, false).show()
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
