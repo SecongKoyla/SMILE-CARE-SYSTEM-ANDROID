@@ -21,7 +21,48 @@ class BookAppointmentFragment : Fragment() {
     private var selectedService: DentalService? = null
     private var selectedDate: Calendar? = null
     private var selectedTime: String? = null
-    private val timeSlots = listOf("8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM")
+
+    private fun dayIndexMon0(dayOfWeek: Int): Int = when (dayOfWeek) {
+        Calendar.MONDAY -> 0
+        Calendar.TUESDAY -> 1
+        Calendar.WEDNESDAY -> 2
+        Calendar.THURSDAY -> 3
+        Calendar.FRIDAY -> 4
+        Calendar.SATURDAY -> 5
+        Calendar.SUNDAY -> 6
+        else -> -1
+    }
+
+    private fun isClinicOpenOn(date: Calendar, app: CustomApp): Boolean {
+        val idx = dayIndexMon0(date.get(Calendar.DAY_OF_WEEK))
+        if (idx !in 0..6) return false
+        return app.clinicOpenDays.getOrElse(idx) { false }
+    }
+
+    private fun dayName(date: Calendar): String {
+        return SimpleDateFormat("EEEE", Locale.getDefault()).format(date.time)
+    }
+
+    private fun getTimeSlots(app: CustomApp): List<String> {
+        val open = app.clinicOpeningMinutes
+        val close = app.clinicClosingMinutes
+        if (open < 0 || close < 0 || open >= close) return emptyList()
+
+        val fmt = SimpleDateFormat("h:mm a", Locale.getDefault())
+        val cal = Calendar.getInstance()
+        val slots = mutableListOf<String>()
+        var mins = open
+        val stepMinutes = 60
+        if (stepMinutes <= 0) return emptyList()
+        // Use < close so you can't book *at* the closing time.
+        while (mins < close) {
+            cal.set(Calendar.HOUR_OF_DAY, mins / 60)
+            cal.set(Calendar.MINUTE, mins % 60)
+            slots.add(fmt.format(cal.time))
+            mins += stepMinutes
+        }
+        return slots
+    }
 
     companion object {
         private const val ARG_PRESELECT_SERVICE_NAME = "preselect_service_name"
@@ -78,7 +119,18 @@ class BookAppointmentFragment : Fragment() {
         view.findViewById<Button>(R.id.buttonPickDate).setOnClickListener {
             val cal = Calendar.getInstance()
             val dialog = DatePickerDialog(requireContext(), { _, y, m, d ->
-                selectedDate = Calendar.getInstance().apply { set(y, m, d) }
+                val picked = Calendar.getInstance().apply {
+                    set(y, m, d, 0, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+                if (!isClinicOpenOn(picked, app)) {
+                    toast("Clinic is closed on ${dayName(picked)}")
+                    return@DatePickerDialog
+                }
+
+                selectedDate = picked
+                selectedTime = null
                 val fmt = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
                 textSelectedDate.text = fmt.format(selectedDate!!.time)
                 loadTimeSlots(view)
@@ -94,6 +146,10 @@ class BookAppointmentFragment : Fragment() {
                 selectedDate == null -> toast("Please select a date.")
                 selectedTime == null -> toast("Please select a time slot.")
                 else -> {
+                    if (!isClinicOpenOn(selectedDate!!, app)) {
+                        toast("Clinic is closed on ${dayName(selectedDate!!)}")
+                        return@setOnClickListener
+                    }
                     val appt = Appointment(
                         userEmail = app.loggedInUser?.email.orEmpty(),
                         service = selectedService!!,
@@ -114,6 +170,19 @@ class BookAppointmentFragment : Fragment() {
         val container = view.findViewById<ViewGroup>(R.id.timeSlotsContainer)
         container.removeAllViews()
         val app = requireActivity().application as CustomApp
+
+        if (selectedDate == null) {
+            view.findViewById<View>(R.id.timeSlotsSection).visibility = View.GONE
+            return
+        }
+
+        val timeSlots = getTimeSlots(app)
+        if (timeSlots.isEmpty()) {
+            toast("Clinic hours are not set correctly")
+            view.findViewById<View>(R.id.timeSlotsSection).visibility = View.GONE
+            return
+        }
+
         val bookedTimes = app.appointments
             .filter {
                 val cal = Calendar.getInstance().apply { time = it.date }

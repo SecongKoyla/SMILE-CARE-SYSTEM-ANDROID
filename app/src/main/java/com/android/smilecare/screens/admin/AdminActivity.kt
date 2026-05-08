@@ -2,6 +2,7 @@ package com.android.smilecare.screens.admin
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
@@ -353,7 +354,78 @@ class AdminActivity : AppCompatActivity(),
     // ══════════════════════════════════════════════════════════════════════════
 
     private fun buildClinicAvailabilityView() {
-        // Content is static XML — nothing dynamic needed yet
+        val app = application as CustomApp
+
+        val swMon = findViewById<Switch>(R.id.switchMonday)
+        val swTue = findViewById<Switch>(R.id.switchTuesday)
+        val swWed = findViewById<Switch>(R.id.switchWednesday)
+        val swThu = findViewById<Switch>(R.id.switchThursday)
+        val swFri = findViewById<Switch>(R.id.switchFriday)
+        val swSat = findViewById<Switch>(R.id.switchSaturday)
+        val swSun = findViewById<Switch>(R.id.switchSunday)
+
+        val openingText = findViewById<TextView>(R.id.textClinicOpeningTime)
+        val closingText = findViewById<TextView>(R.id.textClinicClosingTime)
+
+        fun formatMinutes(totalMinutes: Int): String {
+            val cal = Calendar.getInstance()
+            cal.set(Calendar.HOUR_OF_DAY, totalMinutes / 60)
+            cal.set(Calendar.MINUTE, totalMinutes % 60)
+            val fmt = SimpleDateFormat("h:mm a", Locale.getDefault())
+            return fmt.format(cal.time)
+        }
+
+        fun bindDaySwitch(dayIndexMon0: Int, sw: Switch) {
+            sw.setOnCheckedChangeListener(null)
+            sw.isChecked = app.clinicOpenDays.getOrElse(dayIndexMon0) { false }
+            sw.setOnCheckedChangeListener { _, isChecked ->
+                if (dayIndexMon0 in 0..6) {
+                    app.clinicOpenDays[dayIndexMon0] = isChecked
+                    app.saveClinicSchedule()
+                }
+            }
+        }
+
+        bindDaySwitch(0, swMon)
+        bindDaySwitch(1, swTue)
+        bindDaySwitch(2, swWed)
+        bindDaySwitch(3, swThu)
+        bindDaySwitch(4, swFri)
+        bindDaySwitch(5, swSat)
+        bindDaySwitch(6, swSun)
+
+        openingText.text = formatMinutes(app.clinicOpeningMinutes)
+        closingText.text = formatMinutes(app.clinicClosingMinutes)
+
+        openingText.setOnClickListener {
+            val h = app.clinicOpeningMinutes / 60
+            val m = app.clinicOpeningMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                val newOpen = hourOfDay * 60 + minute
+                if (newOpen >= app.clinicClosingMinutes) {
+                    toast("Opening time must be before closing time")
+                    return@TimePickerDialog
+                }
+                app.clinicOpeningMinutes = newOpen
+                app.saveClinicSchedule()
+                openingText.text = formatMinutes(newOpen)
+            }, h, m, false).show()
+        }
+
+        closingText.setOnClickListener {
+            val h = app.clinicClosingMinutes / 60
+            val m = app.clinicClosingMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                val newClose = hourOfDay * 60 + minute
+                if (newClose <= app.clinicOpeningMinutes) {
+                    toast("Closing time must be after opening time")
+                    return@TimePickerDialog
+                }
+                app.clinicClosingMinutes = newClose
+                app.saveClinicSchedule()
+                closingText.text = formatMinutes(newClose)
+            }, h, m, false).show()
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════

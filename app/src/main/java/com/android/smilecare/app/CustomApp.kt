@@ -18,13 +18,58 @@ class CustomApp : Application() {
 
     val appointments = mutableListOf<Appointment>()
 
+    // Clinic availability (Mon..Sun)
+    var clinicOpenDays: BooleanArray = BooleanArray(7) { it < 5 } // default: Mon-Fri open
+    var clinicOpeningMinutes: Int = 8 * 60
+    var clinicClosingMinutes: Int = 17 * 60
+
     private val prefs by lazy { getSharedPreferences("smilecare_prefs", android.content.Context.MODE_PRIVATE) }
 
     override fun onCreate() {
         super.onCreate()
+        loadClinicSchedule()
         loadUsers()
         loadServices()
         loadAppointments()
+    }
+
+    private fun loadClinicSchedule() {
+        val json = prefs.getString("clinic_schedule", null)
+        if (json.isNullOrBlank()) {
+            saveClinicSchedule()
+            return
+        }
+
+        val obj = try {
+            org.json.JSONObject(json)
+        } catch (_: Exception) {
+            prefs.edit().remove("clinic_schedule").apply()
+            return
+        }
+
+        val days = obj.optJSONArray("openDays")
+        if (days != null && days.length() == 7) {
+            val arr = BooleanArray(7)
+            for (i in 0..6) arr[i] = days.optBoolean(i, i < 5)
+            clinicOpenDays = arr
+        }
+
+        val openM = obj.optInt("openingMinutes", clinicOpeningMinutes)
+        val closeM = obj.optInt("closingMinutes", clinicClosingMinutes)
+        if (openM in 0..(24 * 60) && closeM in 0..(24 * 60) && openM < closeM) {
+            clinicOpeningMinutes = openM
+            clinicClosingMinutes = closeM
+        }
+    }
+
+    fun saveClinicSchedule() {
+        val obj = org.json.JSONObject()
+        val days = org.json.JSONArray()
+        for (i in 0..6) days.put(if (i < clinicOpenDays.size) clinicOpenDays[i] else false)
+        obj.put("openDays", days)
+        obj.put("openingMinutes", clinicOpeningMinutes)
+        obj.put("closingMinutes", clinicClosingMinutes)
+        prefs.edit().putString("clinic_schedule", obj.toString()).apply()
     }
 
     private fun seedDefaultServices() {
@@ -94,15 +139,20 @@ class CustomApp : Application() {
             )
         }
 
+        var didMutate = false
+
         // Seed demo user
         if (registeredUsers.none { it.email.equals("test@gmail.com", ignoreCase = true) }) {
             registeredUsers.add(User("John", "Doe", "test@gmail.com", "1234", role = UserRole.USER))
+            didMutate = true
         }
         // Seed admin user
         if (registeredUsers.none { it.email.equals("test@smilecare.com", ignoreCase = true) }) {
             registeredUsers.add(User("Test", "User", "test@smilecare.com", "123456", role = UserRole.ADMIN))
+            didMutate = true
         }
-        saveUsers()
+
+        if (didMutate) saveUsers()
     }
 
     fun saveUsers() {
