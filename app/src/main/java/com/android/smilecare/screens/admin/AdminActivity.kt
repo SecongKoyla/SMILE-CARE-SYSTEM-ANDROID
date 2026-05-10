@@ -19,6 +19,7 @@ import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailability
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityModel
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityPresenter
 import com.android.smilecare.screens.login.LoginActivity
+import com.android.smilecare.screens.profile.ProfileActivity
 import com.android.smilecare.utils.ClinicDateUtils
 import com.android.smilecare.utils.toast
 import java.text.SimpleDateFormat
@@ -91,8 +92,13 @@ class AdminActivity : AppCompatActivity(),
     private fun setupTopBar() {
         val app = application as CustomApp
         val user = app.loggedInUser
+        if (user == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
         val nameView = findViewById<TextView>(R.id.textAdminName)
-        nameView.text = if (user != null) "${user.firstName} ${user.lastName}" else "Admin"
+        nameView.text = "${user.firstName} ${user.lastName}"
 
         nameView.setOnClickListener { showProfileMenu(it) }
         findViewById<View>(R.id.imageAdminProfile).setOnClickListener { showProfileMenu(it) }
@@ -106,11 +112,15 @@ class AdminActivity : AppCompatActivity(),
     private fun showProfileMenu(anchor: View) {
         val popup = PopupMenu(this, anchor)
         popup.menu.add(0, 1, 0, "View Profile")
-        popup.menu.add(0, 2, 1, "Logout")
+        popup.menu.add(0, 2, 1, "Change Password")
+        popup.menu.add(0, 3, 2, "Upload Photo")
+        popup.menu.add(0, 4, 3, "Logout")
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                1 -> toast("Admin profile — ${(application as CustomApp).loggedInUser?.email}")
-                2 -> {
+                1 -> openProfile(ProfileActivity.SECTION_VIEW_PROFILE)
+                2 -> openProfile(ProfileActivity.SECTION_CHANGE_PASSWORD)
+                3 -> openProfile(ProfileActivity.SECTION_PROFILE_PHOTO)
+                4 -> {
                     model.logout()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()
@@ -119,6 +129,13 @@ class AdminActivity : AppCompatActivity(),
             true
         }
         popup.show()
+    }
+
+    private fun openProfile(section: String) {
+        startActivity(
+            Intent(this, ProfileActivity::class.java)
+                .putExtra(ProfileActivity.EXTRA_OPEN_SECTION, section)
+        )
     }
 
     // ── Tab navigation ────────────────────────────────────────────────────────
