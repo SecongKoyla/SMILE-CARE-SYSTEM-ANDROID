@@ -28,6 +28,19 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
             } catch (_: Exception) {
                 // Some providers don't support persistable permissions; best-effort.
             }
+
+            // Ensure the app can actually read this URI before persisting it.
+            val canRead = try {
+                contentResolver.openInputStream(uri)?.use { true } ?: false
+            } catch (_: Exception) {
+                false
+            }
+
+            if (!canRead) {
+                toast("Unable to access selected photo. Please choose another image.")
+                return@registerForActivityResult
+            }
+
             presenter.onSetPhoto(uri.toString())
         }
     }
