@@ -10,9 +10,15 @@ class BookAppointmentModel(private val app: CustomApp) {
 
     fun getClinicOpenDaysMon0(): BooleanArray = app.clinicOpenDays.copyOf()
 
-    fun getClinicOpeningMinutes(): Int = app.clinicOpeningMinutes
+    fun getClinicMorningStartMinutes(): Int = app.clinicMorningStartMinutes
 
-    fun getClinicClosingMinutes(): Int = app.clinicClosingMinutes
+    fun getClinicMorningEndMinutes(): Int = app.clinicMorningEndMinutes
+
+    fun getClinicAfternoonStartMinutes(): Int = app.clinicAfternoonStartMinutes
+
+    fun getClinicAfternoonEndMinutes(): Int = app.clinicAfternoonEndMinutes
+
+    fun getClinicClosedDatesYmd(): IntArray = app.clinicClosures.map { it.dateYmd }.distinct().sorted().toIntArray()
 
     fun getAppointments(): List<Appointment> = app.appointments.toList()
 

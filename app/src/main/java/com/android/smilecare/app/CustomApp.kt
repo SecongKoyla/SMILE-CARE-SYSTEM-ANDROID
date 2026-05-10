@@ -24,8 +24,23 @@ class CustomApp : Application() {
 
     // Clinic availability (Mon..Sun)
     var clinicOpenDays: BooleanArray = BooleanArray(7) { it < 5 } // default: Mon-Fri open
+    // Legacy continuous hours (kept for backward compatibility).
     var clinicOpeningMinutes: Int = 8 * 60
     var clinicClosingMinutes: Int = 17 * 60
+
+    // New: split sessions (minutes since midnight).
+    var clinicMorningStartMinutes: Int = 8 * 60
+    var clinicMorningEndMinutes: Int = 12 * 60
+    var clinicAfternoonStartMinutes: Int = 13 * 60
+    var clinicAfternoonEndMinutes: Int = 17 * 60
+
+    data class ClinicClosure(
+        val dateYmd: Int, // YYYYMMDD
+        val reason: String
+    )
+
+    // New: date-specific closures that override regular clinic hours.
+    val clinicClosures: MutableList<ClinicClosure> = mutableListOf()
 
     private val prefs by lazy { getSharedPreferences("smilecare_prefs", android.content.Context.MODE_PRIVATE) }
 
@@ -126,6 +141,58 @@ class CustomApp : Application() {
             clinicOpeningMinutes = openM
             clinicClosingMinutes = closeM
         }
+
+        // New session fields (migrates from legacy opening/closing if missing).
+        val hasNewSessions =
+            obj.has("morningStartMinutes") || obj.has("morningEndMinutes") ||
+                obj.has("afternoonStartMinutes") || obj.has("afternoonEndMinutes")
+
+        if (hasNewSessions) {
+            val ms = obj.optInt("morningStartMinutes", clinicMorningStartMinutes)
+            val me = obj.optInt("morningEndMinutes", clinicMorningEndMinutes)
+            val asM = obj.optInt("afternoonStartMinutes", clinicAfternoonStartMinutes)
+            val ae = obj.optInt("afternoonEndMinutes", clinicAfternoonEndMinutes)
+            if (ms in 0..(24 * 60) && me in 0..(24 * 60) && asM in 0..(24 * 60) && ae in 0..(24 * 60) &&
+                ms < me && asM < ae && me <= asM
+            ) {
+                clinicMorningStartMinutes = ms
+                clinicMorningEndMinutes = me
+                clinicAfternoonStartMinutes = asM
+                clinicAfternoonEndMinutes = ae
+            }
+        } else {
+            // Migrate a reasonable split from legacy continuous hours.
+            val open = clinicOpeningMinutes
+            val close = clinicClosingMinutes
+            val duration = (close - open).coerceAtLeast(0)
+            if (duration >= 8 * 60) {
+                clinicMorningStartMinutes = open
+                clinicMorningEndMinutes = (open + 4 * 60).coerceAtMost(close)
+                clinicAfternoonStartMinutes = (clinicMorningEndMinutes + 60).coerceAtMost(close)
+                clinicAfternoonEndMinutes = close
+            } else {
+                clinicMorningStartMinutes = open
+                clinicMorningEndMinutes = (open + (duration / 2)).coerceAtMost(close)
+                clinicAfternoonStartMinutes = clinicMorningEndMinutes
+                clinicAfternoonEndMinutes = close
+            }
+        }
+
+        // New closures
+        clinicClosures.clear()
+        val closures = obj.optJSONArray("closedDates")
+        if (closures != null) {
+            val seen = HashSet<Int>()
+            for (i in 0 until closures.length()) {
+                val c = closures.optJSONObject(i) ?: continue
+                val ymd = c.optInt("dateYmd", -1)
+                if (ymd !in 19000101..21001231) continue
+                if (!seen.add(ymd)) continue
+                val reason = c.optString("reason", "").trim()
+                clinicClosures.add(ClinicClosure(ymd, reason))
+            }
+            clinicClosures.sortBy { it.dateYmd }
+        }
     }
 
     fun saveClinicSchedule() {
@@ -133,8 +200,25 @@ class CustomApp : Application() {
         val days = org.json.JSONArray()
         for (i in 0..6) days.put(if (i < clinicOpenDays.size) clinicOpenDays[i] else false)
         obj.put("openDays", days)
+        // Persist legacy fields.
         obj.put("openingMinutes", clinicOpeningMinutes)
         obj.put("closingMinutes", clinicClosingMinutes)
+
+        // Persist session fields.
+        obj.put("morningStartMinutes", clinicMorningStartMinutes)
+        obj.put("morningEndMinutes", clinicMorningEndMinutes)
+        obj.put("afternoonStartMinutes", clinicAfternoonStartMinutes)
+        obj.put("afternoonEndMinutes", clinicAfternoonEndMinutes)
+
+        // Persist closures.
+        val closures = org.json.JSONArray()
+        for (c in clinicClosures.sortedBy { it.dateYmd }) {
+            val o = org.json.JSONObject()
+            o.put("dateYmd", c.dateYmd)
+            o.put("reason", c.reason)
+            closures.put(o)
+        }
+        obj.put("closedDates", closures)
         prefs.edit().putString("clinic_schedule", obj.toString()).apply()
     }
 

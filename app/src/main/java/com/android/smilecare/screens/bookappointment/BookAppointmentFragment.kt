@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
 import com.android.smilecare.data.DentalService
+import com.android.smilecare.utils.ClinicDateUtils
 import com.android.smilecare.utils.toast
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.CompositeDateValidator
@@ -66,6 +67,35 @@ class BookAppointmentFragment : Fragment(), BookAppointmentContract.View {
         }
     }
 
+    private class ClosedDatesValidator(
+        private val closedYmd: IntArray
+    ) : CalendarConstraints.DateValidator {
+
+        private val closedSet: Set<Int> = closedYmd.toSet()
+
+        override fun isValid(date: Long): Boolean {
+            val ymd = ClinicDateUtils.ymdFromUtcMillis(date)
+            return !closedSet.contains(ymd)
+        }
+
+        override fun writeToParcel(dest: Parcel, flags: Int) {
+            dest.writeIntArray(closedYmd)
+        }
+
+        override fun describeContents(): Int = 0
+
+        companion object {
+            @JvmField
+            val CREATOR: Parcelable.Creator<ClosedDatesValidator> = object : Parcelable.Creator<ClosedDatesValidator> {
+                override fun createFromParcel(source: Parcel): ClosedDatesValidator {
+                    return ClosedDatesValidator(source.createIntArray() ?: intArrayOf())
+                }
+
+                override fun newArray(size: Int): Array<ClosedDatesValidator?> = arrayOfNulls(size)
+            }
+        }
+    }
+
     companion object {
         private const val ARG_PRESELECT_SERVICE_NAME = "preselect_service_name"
 
@@ -108,6 +138,7 @@ class BookAppointmentFragment : Fragment(), BookAppointmentContract.View {
         view.findViewById<Button>(R.id.buttonPickDate).setOnClickListener {
             if (!isAdded || parentFragmentManager.isStateSaved) return@setOnClickListener
             val openDays = presenter.getOpenDaysMon0ForValidator()
+            val closedYmd = presenter.getClosedDatesYmdForValidator()
             if (openDays.none { it }) {
                 toast("Clinic is closed all week")
                 return@setOnClickListener
@@ -118,7 +149,8 @@ class BookAppointmentFragment : Fragment(), BookAppointmentContract.View {
                     CompositeDateValidator.allOf(
                         listOf(
                             DateValidatorPointForward.now(),
-                            ClinicOpenDaysValidator(openDays)
+                            ClinicOpenDaysValidator(openDays),
+                            ClosedDatesValidator(closedYmd)
                         )
                     )
                 )

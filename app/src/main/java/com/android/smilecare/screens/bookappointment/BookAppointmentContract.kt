@@ -22,6 +22,7 @@ interface BookAppointmentContract {
         fun onViewReady(preselectedServiceName: String?)
         fun onServiceSelected(service: DentalService?)
         fun getOpenDaysMon0ForValidator(): BooleanArray
+        fun getClosedDatesYmdForValidator(): IntArray
         fun onDatePicked(date: java.util.Calendar)
         fun onTimeSlotSelected(slotLabel: String)
         fun onConfirmClicked()
