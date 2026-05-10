@@ -19,6 +19,7 @@ import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailability
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityModel
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityPresenter
 import com.android.smilecare.screens.login.LoginActivity
+import com.android.smilecare.utils.ClinicDateUtils
 import com.android.smilecare.utils.toast
 import java.text.SimpleDateFormat
 import java.util.*
@@ -49,6 +50,9 @@ class AdminActivity : AppCompatActivity(),
 
     private var selectedDateFilter: Date? = null
     private var currentStatusFilter = "All"
+
+    // Clinic exceptions (Admin UI only)
+    private var pendingExceptionDateYmd: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -163,7 +167,7 @@ class AdminActivity : AppCompatActivity(),
         val rg = findViewById<RadioGroup>(R.id.rgAdminStatusFilter)
         rg.setOnCheckedChangeListener { group, checkedId ->
             for (i in 0 until group.childCount) {
-                val rb = group.getChildAt(i) as RadioButton
+                val rb = group.getChildAt(i) as? RadioButton ?: continue
                 rb.setBackgroundResource(R.drawable.bg_time_slot)
                 rb.setTextColor(getColor(R.color.text_primary))
             }
@@ -394,25 +398,110 @@ class AdminActivity : AppCompatActivity(),
         bindDaySwitch(5, R.id.switchSaturday)
         bindDaySwitch(6, R.id.switchSunday)
 
-        val openingText = findViewById<TextView>(R.id.textClinicOpeningTime)
-        val closingText = findViewById<TextView>(R.id.textClinicClosingTime)
-        openingText.text = formatMinutes(state.openingMinutes)
-        closingText.text = formatMinutes(state.closingMinutes)
+        val morningStart = findViewById<TextView>(R.id.textMorningStartTime)
+        val morningEnd = findViewById<TextView>(R.id.textMorningEndTime)
+        val afternoonStart = findViewById<TextView>(R.id.textAfternoonStartTime)
+        val afternoonEnd = findViewById<TextView>(R.id.textAfternoonEndTime)
 
-        openingText.setOnClickListener {
-            val h = state.openingMinutes / 60
-            val m = state.openingMinutes % 60
+        morningStart.text = formatMinutes(state.morningStartMinutes)
+        morningEnd.text = formatMinutes(state.morningEndMinutes)
+        afternoonStart.text = formatMinutes(state.afternoonStartMinutes)
+        afternoonEnd.text = formatMinutes(state.afternoonEndMinutes)
+
+        morningStart.setOnClickListener {
+            val h = state.morningStartMinutes / 60
+            val m = state.morningStartMinutes % 60
             TimePickerDialog(this, { _, hourOfDay, minute ->
-                clinicAvailabilityPresenter.onOpeningMinutesPicked(hourOfDay * 60 + minute)
+                clinicAvailabilityPresenter.onMorningStartPicked(hourOfDay * 60 + minute)
+            }, h, m, false).show()
+        }
+        morningEnd.setOnClickListener {
+            val h = state.morningEndMinutes / 60
+            val m = state.morningEndMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                clinicAvailabilityPresenter.onMorningEndPicked(hourOfDay * 60 + minute)
+            }, h, m, false).show()
+        }
+        afternoonStart.setOnClickListener {
+            val h = state.afternoonStartMinutes / 60
+            val m = state.afternoonStartMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                clinicAvailabilityPresenter.onAfternoonStartPicked(hourOfDay * 60 + minute)
+            }, h, m, false).show()
+        }
+        afternoonEnd.setOnClickListener {
+            val h = state.afternoonEndMinutes / 60
+            val m = state.afternoonEndMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                clinicAvailabilityPresenter.onAfternoonEndPicked(hourOfDay * 60 + minute)
             }, h, m, false).show()
         }
 
-        closingText.setOnClickListener {
-            val h = state.closingMinutes / 60
-            val m = state.closingMinutes % 60
-            TimePickerDialog(this, { _, hourOfDay, minute ->
-                clinicAvailabilityPresenter.onClosingMinutesPicked(hourOfDay * 60 + minute)
-            }, h, m, false).show()
+        // Date-specific exceptions
+        val textExceptionDate = findViewById<TextView>(R.id.textExceptionDate)
+        val editExceptionReason = findViewById<EditText>(R.id.editExceptionReason)
+        val btnAddException = findViewById<Button>(R.id.btnAddException)
+
+        // Keep the selected date label stable across renders.
+        val selectedYmd = pendingExceptionDateYmd
+        textExceptionDate.text = if (selectedYmd != null) ClinicDateUtils.formatYmd(selectedYmd) else "Select date"
+
+        textExceptionDate.setOnClickListener {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(this, { _, year, month, dayOfMonth ->
+                // month is 0-based
+                pendingExceptionDateYmd = (year * 10000) + ((month + 1) * 100) + dayOfMonth
+                textExceptionDate.text = ClinicDateUtils.formatYmd(pendingExceptionDateYmd!!)
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
+        btnAddException.setOnClickListener {
+            val ymd = pendingExceptionDateYmd
+            if (ymd == null) {
+                toast("Please select a date")
+                return@setOnClickListener
+            }
+            clinicAvailabilityPresenter.onAddClosedDate(ymd, editExceptionReason.text?.toString().orEmpty())
+            // Clear inputs after add
+            pendingExceptionDateYmd = null
+            textExceptionDate.text = "Select date"
+            editExceptionReason.setText("")
+        }
+
+        val noExceptions = findViewById<TextView>(R.id.textNoExceptions)
+        val list = findViewById<LinearLayout>(R.id.layoutExceptionsList)
+        list.removeAllViews()
+        if (state.closedDates.isEmpty()) {
+            noExceptions.visibility = View.VISIBLE
+        } else {
+            noExceptions.visibility = View.GONE
+            val density = resources.displayMetrics.density
+            fun dp(value: Int): Int = (value * density).toInt()
+            state.closedDates.forEach { c ->
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setBackgroundResource(R.drawable.bg_time_slot)
+                    setPadding(dp(16), dp(12), dp(16), dp(12))
+                }
+                val dateTv = TextView(this).apply {
+                    text = ClinicDateUtils.formatYmd(c.dateYmd)
+                    textSize = 13f
+                    setTextColor(getColor(R.color.text_primary))
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                }
+                row.addView(dateTv)
+                if (c.reason.isNotBlank()) {
+                    val reasonTv = TextView(this).apply {
+                        text = c.reason
+                        textSize = 12f
+                        setTextColor(getColor(R.color.text_secondary))
+                    }
+                    row.addView(reasonTv)
+                }
+                val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                lp.topMargin = dp(8)
+                list.addView(row, lp)
+            }
         }
     }
 

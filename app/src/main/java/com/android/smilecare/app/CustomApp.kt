@@ -1,12 +1,16 @@
 package com.android.smilecare.app
 
 import android.app.Application
+import android.util.Log
 import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
 import com.android.smilecare.data.UserRole
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.util.Date
+import kotlin.system.exitProcess
 
 class CustomApp : Application() {
 
@@ -20,17 +24,94 @@ class CustomApp : Application() {
 
     // Clinic availability (Mon..Sun)
     var clinicOpenDays: BooleanArray = BooleanArray(7) { it < 5 } // default: Mon-Fri open
+    // Legacy continuous hours (kept for backward compatibility).
     var clinicOpeningMinutes: Int = 8 * 60
     var clinicClosingMinutes: Int = 17 * 60
 
+    // New: split sessions (minutes since midnight).
+    var clinicMorningStartMinutes: Int = 8 * 60
+    var clinicMorningEndMinutes: Int = 12 * 60
+    var clinicAfternoonStartMinutes: Int = 13 * 60
+    var clinicAfternoonEndMinutes: Int = 17 * 60
+
+    data class ClinicClosure(
+        val dateYmd: Int, // YYYYMMDD
+        val reason: String
+    )
+
+    // New: date-specific closures that override regular clinic hours.
+    val clinicClosures: MutableList<ClinicClosure> = mutableListOf()
+
     private val prefs by lazy { getSharedPreferences("smilecare_prefs", android.content.Context.MODE_PRIVATE) }
+
+    private val prefLastCrash = "last_crash"
+    private val prefLastCrashTime = "last_crash_time"
 
     override fun onCreate() {
         super.onCreate()
-        loadClinicSchedule()
-        loadUsers()
-        loadServices()
-        loadAppointments()
+
+        // If the app died previously, print the root exception on next launch.
+        printAndClearLastCrashIfAny()
+        installCrashRecorder()
+
+        val initialized = runCatching {
+            loadClinicSchedule()
+            loadUsers()
+            loadServices()
+            loadAppointments()
+        }.isSuccess
+
+        if (!initialized) {
+            // If anything went wrong during cold-start initialization (often due to corrupted
+            // preferences), reset and re-seed instead of crashing the whole process.
+            prefs.edit().clear().apply()
+            loadClinicSchedule()
+            loadUsers()
+            loadServices()
+            loadAppointments()
+        }
+    }
+
+    private fun printAndClearLastCrashIfAny() {
+        val crash = prefs.getString(prefLastCrash, null) ?: return
+        val time = prefs.getLong(prefLastCrashTime, 0L)
+        Log.e("SmileCareCrash", "Previous crash (timeMillis=$time):\n$crash")
+        prefs.edit().remove(prefLastCrash).remove(prefLastCrashTime).apply()
+    }
+
+    private fun installCrashRecorder() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                // Log immediately so Logcat shows the real crash cause (not only the later
+                // InputDispatcher "channel broken" message).
+                Log.e("SmileCareCrash", "Uncaught exception on thread=${thread.name}", throwable)
+
+                val sw = StringWriter()
+                throwable.printStackTrace(PrintWriter(sw))
+                val payload = buildString {
+                    append("Thread=").append(thread.name).append('\n')
+                    append(throwable::class.java.name)
+                    throwable.message?.let { append(": ").append(it) }
+                    append('\n')
+                    append(sw.toString())
+                }
+                // Use commit() because the process is about to die.
+                prefs.edit()
+                    .putLong(prefLastCrashTime, System.currentTimeMillis())
+                    .putString(prefLastCrash, payload)
+                    .commit()
+            } catch (_: Exception) {
+                // Best-effort only.
+            }
+
+            if (previous != null) {
+                previous.uncaughtException(thread, throwable)
+            } else {
+                android.os.Process.killProcess(android.os.Process.myPid())
+                exitProcess(10)
+            }
+        }
     }
 
     private fun loadClinicSchedule() {
@@ -60,6 +141,58 @@ class CustomApp : Application() {
             clinicOpeningMinutes = openM
             clinicClosingMinutes = closeM
         }
+
+        // New session fields (migrates from legacy opening/closing if missing).
+        val hasNewSessions =
+            obj.has("morningStartMinutes") || obj.has("morningEndMinutes") ||
+                obj.has("afternoonStartMinutes") || obj.has("afternoonEndMinutes")
+
+        if (hasNewSessions) {
+            val ms = obj.optInt("morningStartMinutes", clinicMorningStartMinutes)
+            val me = obj.optInt("morningEndMinutes", clinicMorningEndMinutes)
+            val asM = obj.optInt("afternoonStartMinutes", clinicAfternoonStartMinutes)
+            val ae = obj.optInt("afternoonEndMinutes", clinicAfternoonEndMinutes)
+            if (ms in 0..(24 * 60) && me in 0..(24 * 60) && asM in 0..(24 * 60) && ae in 0..(24 * 60) &&
+                ms < me && asM < ae && me <= asM
+            ) {
+                clinicMorningStartMinutes = ms
+                clinicMorningEndMinutes = me
+                clinicAfternoonStartMinutes = asM
+                clinicAfternoonEndMinutes = ae
+            }
+        } else {
+            // Migrate a reasonable split from legacy continuous hours.
+            val open = clinicOpeningMinutes
+            val close = clinicClosingMinutes
+            val duration = (close - open).coerceAtLeast(0)
+            if (duration >= 8 * 60) {
+                clinicMorningStartMinutes = open
+                clinicMorningEndMinutes = (open + 4 * 60).coerceAtMost(close)
+                clinicAfternoonStartMinutes = (clinicMorningEndMinutes + 60).coerceAtMost(close)
+                clinicAfternoonEndMinutes = close
+            } else {
+                clinicMorningStartMinutes = open
+                clinicMorningEndMinutes = (open + (duration / 2)).coerceAtMost(close)
+                clinicAfternoonStartMinutes = clinicMorningEndMinutes
+                clinicAfternoonEndMinutes = close
+            }
+        }
+
+        // New closures
+        clinicClosures.clear()
+        val closures = obj.optJSONArray("closedDates")
+        if (closures != null) {
+            val seen = HashSet<Int>()
+            for (i in 0 until closures.length()) {
+                val c = closures.optJSONObject(i) ?: continue
+                val ymd = c.optInt("dateYmd", -1)
+                if (ymd !in 19000101..21001231) continue
+                if (!seen.add(ymd)) continue
+                val reason = c.optString("reason", "").trim()
+                clinicClosures.add(ClinicClosure(ymd, reason))
+            }
+            clinicClosures.sortBy { it.dateYmd }
+        }
     }
 
     fun saveClinicSchedule() {
@@ -67,8 +200,25 @@ class CustomApp : Application() {
         val days = org.json.JSONArray()
         for (i in 0..6) days.put(if (i < clinicOpenDays.size) clinicOpenDays[i] else false)
         obj.put("openDays", days)
+        // Persist legacy fields.
         obj.put("openingMinutes", clinicOpeningMinutes)
         obj.put("closingMinutes", clinicClosingMinutes)
+
+        // Persist session fields.
+        obj.put("morningStartMinutes", clinicMorningStartMinutes)
+        obj.put("morningEndMinutes", clinicMorningEndMinutes)
+        obj.put("afternoonStartMinutes", clinicAfternoonStartMinutes)
+        obj.put("afternoonEndMinutes", clinicAfternoonEndMinutes)
+
+        // Persist closures.
+        val closures = org.json.JSONArray()
+        for (c in clinicClosures.sortedBy { it.dateYmd }) {
+            val o = org.json.JSONObject()
+            o.put("dateYmd", c.dateYmd)
+            o.put("reason", c.reason)
+            closures.put(o)
+        }
+        obj.put("closedDates", closures)
         prefs.edit().putString("clinic_schedule", obj.toString()).apply()
     }
 

@@ -9,7 +9,11 @@ class HomePresenter(
 ) : HomeContract.Presenter {
 
     override fun loadHome() {
-        val user = model.getLoggedInUser() ?: return
+        val user = model.getLoggedInUser()
+        if (user == null) {
+            view.navigateToLogin()
+            return
+        }
         val greeting = model.getGreeting()
         view.showGreeting(user.lastName, greeting)
 

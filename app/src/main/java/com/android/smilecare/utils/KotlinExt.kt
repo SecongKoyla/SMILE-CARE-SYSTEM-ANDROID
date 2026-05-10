@@ -7,7 +7,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 
 fun Activity.getEditTextValue(id: Int): String {
-    return findViewById<EditText>(id).text.toString().trim()
+    return findViewById<EditText>(id)?.text?.toString()?.trim().orEmpty()
 }
 
 fun Activity.toast(message: String) {
@@ -15,7 +15,8 @@ fun Activity.toast(message: String) {
 }
 
 fun Fragment.toast(message: String) {
-    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    val ctx = context ?: return
+    Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
 }
 
 fun View.visible() { visibility = View.VISIBLE }

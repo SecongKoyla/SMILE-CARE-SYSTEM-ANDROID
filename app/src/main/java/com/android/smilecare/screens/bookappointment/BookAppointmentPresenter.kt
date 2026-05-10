@@ -3,10 +3,10 @@ package com.android.smilecare.screens.bookappointment
 import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
+import com.android.smilecare.utils.ClinicDateUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.TimeZone
 import java.util.UUID
 
 class BookAppointmentPresenter(
@@ -31,7 +31,17 @@ class BookAppointmentPresenter(
         return model.getClinicOpenDaysMon0()
     }
 
+    override fun getClosedDatesYmdForValidator(): IntArray {
+        return model.getClinicClosedDatesYmd()
+    }
+
     override fun onDatePicked(date: Calendar) {
+        if (isClosedException(date)) {
+            view.showMessage("Clinic is closed on this date")
+            view.showTimeSlots(emptyList())
+            view.setTimeSlotsSectionVisible(false)
+            return
+        }
         if (!isClinicOpenOn(date)) {
             view.showMessage("Clinic is closed on ${dayName(date)}")
             view.showTimeSlots(emptyList())
@@ -60,6 +70,7 @@ class BookAppointmentPresenter(
             service == null -> view.showMessage("Please select a service.")
             date == null -> view.showMessage("Please select a date.")
             time.isNullOrBlank() -> view.showMessage("Please select a time slot.")
+            isClosedException(date) -> view.showMessage("Clinic is closed on this date")
             !isClinicOpenOn(date) -> view.showMessage("Clinic is closed on ${dayName(date)}")
             else -> {
                 val email = model.getLoggedInUserEmail()
@@ -88,6 +99,11 @@ class BookAppointmentPresenter(
         return openDays.getOrElse(idx) { false }
     }
 
+    private fun isClosedException(date: Calendar): Boolean {
+        val ymd = ClinicDateUtils.ymdFromLocalCalendar(date)
+        return model.getClinicClosedDatesYmd().contains(ymd)
+    }
+
     private fun dayIndexMon0(dayOfWeek: Int): Int = when (dayOfWeek) {
         Calendar.MONDAY -> 0
         Calendar.TUESDAY -> 1
@@ -104,14 +120,22 @@ class BookAppointmentPresenter(
     }
 
     private fun buildTimeSlotsFor(date: Calendar): List<BookAppointmentContract.TimeSlot> {
-        val opening = model.getClinicOpeningMinutes()
-        val closing = model.getClinicClosingMinutes()
-        if (opening < 0 || closing < 0 || opening >= closing) {
+        val ms = model.getClinicMorningStartMinutes()
+        val me = model.getClinicMorningEndMinutes()
+        val asM = model.getClinicAfternoonStartMinutes()
+        val ae = model.getClinicAfternoonEndMinutes()
+        val valid =
+            ms in 0..(24 * 60) && me in 0..(24 * 60) && asM in 0..(24 * 60) && ae in 0..(24 * 60) &&
+                ms < me && asM < ae && me <= asM
+        if (!valid) {
             view.showMessage("Clinic hours are not set correctly")
             return emptyList()
         }
 
-        val slots = generateTimeSlots(opening, closing)
+        val slots = buildList {
+            addAll(generateTimeSlots(ms, me))
+            addAll(generateTimeSlots(asM, ae))
+        }
         val booked = bookedTimesForDate(date)
         return slots.map { label ->
             BookAppointmentContract.TimeSlot(label = label, isBooked = booked.contains(label))

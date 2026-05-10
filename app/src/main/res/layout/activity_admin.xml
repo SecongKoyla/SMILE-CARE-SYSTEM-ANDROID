@@ -440,16 +440,215 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_card" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Clinic Hours" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/text_primary" android:layout_marginBottom="12dp"/>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Opening time" android:textSize="14sp" android:textColor="@color/text_secondary"/>
-                        <TextView android:id="@+id/textClinicOpeningTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="8:00 AM" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/teal_dark"/>
+                <!-- Morning Session -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_marginTop="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Morning Session"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="12dp"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Start time"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+                        <TextView
+                            android:id="@+id/textMorningStartTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="8:00 AM"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/teal_dark"/>
                     </LinearLayout>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Closing time" android:textSize="14sp" android:textColor="@color/text_secondary"/>
-                        <TextView android:id="@+id/textClinicClosingTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5:00 PM" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/teal_dark"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="End time"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+                        <TextView
+                            android:id="@+id/textMorningEndTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="12:00 PM"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/teal_dark"/>
                     </LinearLayout>
+                </LinearLayout>
+
+                <!-- Afternoon Session -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_marginTop="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Afternoon Session"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="12dp"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Start time"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+                        <TextView
+                            android:id="@+id/textAfternoonStartTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1:00 PM"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/teal_dark"/>
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="End time"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+                        <TextView
+                            android:id="@+id/textAfternoonEndTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="5:00 PM"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/teal_dark"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Date-Specific Exceptions -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Date-Specific Exceptions"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="These dates override regular clinic hours and mark the clinic as CLOSED. Patients will not be able to book appointments on these days."
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
+
+                        <TextView
+                            android:id="@+id/textExceptionDate"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:gravity="center_vertical"
+                            android:paddingLeft="12dp"
+                            android:paddingRight="12dp"
+                            android:text="Select date"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/teal_dark"
+                            android:background="@drawable/bg_time_slot"/>
+
+                        <Button
+                            android:id="@+id/btnAddException"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="8dp"
+                            android:text="Add"
+                            android:textSize="12sp"
+                            android:textColor="@color/white"
+                            android:background="@drawable/bg_button_teal"
+                            android:paddingLeft="14dp"
+                            android:paddingRight="14dp"/>
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/editExceptionReason"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:hint="Reason (optional)"
+                        android:textSize="13sp"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:background="@drawable/bg_edittext"
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:id="@+id/textNoExceptions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="No closure dates added."
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:gravity="center"
+                        android:padding="10dp"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:id="@+id/layoutExceptionsList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"/>
                 </LinearLayout>
 
                 <Button

@@ -78,10 +78,26 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         val image = findViewById<ImageView>(R.id.imageProfile)
         val photoUri = app.loggedInUser?.photoUri.orEmpty()
         if (photoUri.isNotBlank()) {
-            image.setImageURI(Uri.parse(photoUri))
+            try {
+                image.setImageURI(Uri.parse(photoUri))
+            } catch (_: Exception) {
+                // If persisted permission was lost / URI is invalid, avoid crashing.
+                image.setImageResource(R.drawable.profile)
+                clearLoggedInUserPhotoUri(app)
+            }
         } else {
             image.setImageResource(R.drawable.profile)
         }
+    }
+
+    private fun clearLoggedInUserPhotoUri(app: CustomApp) {
+        val email = app.loggedInUser?.email ?: return
+        val index = app.registeredUsers.indexOfFirst { it.email.equals(email, ignoreCase = true) }
+        if (index != -1) {
+            app.registeredUsers[index].photoUri = ""
+        }
+        app.loggedInUser?.photoUri = ""
+        app.saveUsers()
     }
 
     private fun showProfileMenu(anchor: View) {
@@ -107,10 +123,17 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
     }
 
     private fun loadFragment(fragment: Fragment) {
+        if (isFinishing || isDestroyed) return
         homeScrollView.visibility = View.GONE
-        supportFragmentManager.beginTransaction()
+        val tx = supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
-            .commit()
+
+        // Avoid crashing with: "Can not perform this action after onSaveInstanceState".
+        if (supportFragmentManager.isStateSaved) {
+            tx.commitAllowingStateLoss()
+        } else {
+            tx.commit()
+        }
         findViewById<View>(R.id.fragmentContainer).visibility = View.VISIBLE
     }
 
@@ -171,9 +194,11 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
     private fun setActiveNav(index: Int) {
         listOf(navHome, navAppointments, navBook, navServices).forEachIndexed { i, nav ->
-            (nav.getChildAt(1) as? TextView)?.setTextColor(
-                if (i == index) getColor(R.color.teal_primary) else getColor(R.color.text_secondary)
-            )
+            if (nav.childCount > 1) {
+                (nav.getChildAt(1) as? TextView)?.setTextColor(
+                    if (i == index) getColor(R.color.teal_primary) else getColor(R.color.text_secondary)
+                )
+            }
         }
     }
 }
