@@ -30,9 +30,10 @@ class ServicesFragment : Fragment(), ServicesContract.View {
     }
 
     override fun showServices(services: List<DentalService>) {
+        val ctx = context ?: return
         servicesList.removeAllViews()
         services.forEach { service ->
-            val item = LayoutInflater.from(requireContext())
+            val item = LayoutInflater.from(ctx)
                 .inflate(R.layout.item_service, servicesList, false)
 
             item.findViewById<TextView>(R.id.textServiceEmoji).text = service.emoji

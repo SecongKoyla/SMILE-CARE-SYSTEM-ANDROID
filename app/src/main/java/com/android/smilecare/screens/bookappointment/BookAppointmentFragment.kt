@@ -106,6 +106,7 @@ class BookAppointmentFragment : Fragment(), BookAppointmentContract.View {
 
         // Date picker
         view.findViewById<Button>(R.id.buttonPickDate).setOnClickListener {
+            if (!isAdded || parentFragmentManager.isStateSaved) return@setOnClickListener
             val openDays = presenter.getOpenDaysMon0ForValidator()
             if (openDays.none { it }) {
                 toast("Clinic is closed all week")

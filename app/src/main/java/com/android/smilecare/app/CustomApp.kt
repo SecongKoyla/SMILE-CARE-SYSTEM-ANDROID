@@ -1,12 +1,16 @@
 package com.android.smilecare.app
 
 import android.app.Application
+import android.util.Log
 import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
 import com.android.smilecare.data.UserRole
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.util.Date
+import kotlin.system.exitProcess
 
 class CustomApp : Application() {
 
@@ -25,12 +29,74 @@ class CustomApp : Application() {
 
     private val prefs by lazy { getSharedPreferences("smilecare_prefs", android.content.Context.MODE_PRIVATE) }
 
+    private val prefLastCrash = "last_crash"
+    private val prefLastCrashTime = "last_crash_time"
+
     override fun onCreate() {
         super.onCreate()
-        loadClinicSchedule()
-        loadUsers()
-        loadServices()
-        loadAppointments()
+
+        // If the app died previously, print the root exception on next launch.
+        printAndClearLastCrashIfAny()
+        installCrashRecorder()
+
+        val initialized = runCatching {
+            loadClinicSchedule()
+            loadUsers()
+            loadServices()
+            loadAppointments()
+        }.isSuccess
+
+        if (!initialized) {
+            // If anything went wrong during cold-start initialization (often due to corrupted
+            // preferences), reset and re-seed instead of crashing the whole process.
+            prefs.edit().clear().apply()
+            loadClinicSchedule()
+            loadUsers()
+            loadServices()
+            loadAppointments()
+        }
+    }
+
+    private fun printAndClearLastCrashIfAny() {
+        val crash = prefs.getString(prefLastCrash, null) ?: return
+        val time = prefs.getLong(prefLastCrashTime, 0L)
+        Log.e("SmileCareCrash", "Previous crash (timeMillis=$time):\n$crash")
+        prefs.edit().remove(prefLastCrash).remove(prefLastCrashTime).apply()
+    }
+
+    private fun installCrashRecorder() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                // Log immediately so Logcat shows the real crash cause (not only the later
+                // InputDispatcher "channel broken" message).
+                Log.e("SmileCareCrash", "Uncaught exception on thread=${thread.name}", throwable)
+
+                val sw = StringWriter()
+                throwable.printStackTrace(PrintWriter(sw))
+                val payload = buildString {
+                    append("Thread=").append(thread.name).append('\n')
+                    append(throwable::class.java.name)
+                    throwable.message?.let { append(": ").append(it) }
+                    append('\n')
+                    append(sw.toString())
+                }
+                // Use commit() because the process is about to die.
+                prefs.edit()
+                    .putLong(prefLastCrashTime, System.currentTimeMillis())
+                    .putString(prefLastCrash, payload)
+                    .commit()
+            } catch (_: Exception) {
+                // Best-effort only.
+            }
+
+            if (previous != null) {
+                previous.uncaughtException(thread, throwable)
+            } else {
+                android.os.Process.killProcess(android.os.Process.myPid())
+                exitProcess(10)
+            }
+        }
     }
 
     private fun loadClinicSchedule() {

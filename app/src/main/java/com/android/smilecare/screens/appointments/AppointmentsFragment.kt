@@ -41,7 +41,7 @@ class AppointmentsFragment : Fragment(), AppointmentsContract.View {
         rgStatusFilter.setOnCheckedChangeListener { group, checkedId ->
             // Reset background for all
             for (i in 0 until group.childCount) {
-                val rb = group.getChildAt(i) as RadioButton
+                val rb = group.getChildAt(i) as? RadioButton ?: continue
                 rb.setBackgroundResource(R.drawable.bg_time_slot)
                 rb.setTextColor(resources.getColor(R.color.text_primary, null))
             }
@@ -58,19 +58,21 @@ class AppointmentsFragment : Fragment(), AppointmentsContract.View {
         }
 
         // Initialize styling for checked radio button and load all items
-        val initialRb = view.findViewById<RadioButton>(R.id.rbAll)
-        initialRb.setBackgroundResource(R.drawable.bg_time_slot_selected)
-        initialRb.setTextColor(resources.getColor(R.color.white, null))
+        view.findViewById<RadioButton>(R.id.rbAll)?.let { initialRb ->
+            initialRb.setBackgroundResource(R.drawable.bg_time_slot_selected)
+            initialRb.setTextColor(resources.getColor(R.color.white, null))
+        }
         
         presenter.loadAppointments("All")
     }
 
     override fun showAppointments(appointments: List<Appointment>) {
+        val ctx = context ?: return
         appointmentsList.removeAllViews()
         val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
 
         appointments.forEach { appt ->
-            val item = LayoutInflater.from(requireContext())
+            val item = LayoutInflater.from(ctx)
                 .inflate(R.layout.item_appointment, appointmentsList, false)
 
             item.findViewById<TextView>(R.id.textApptDate).text = dateFormat.format(appt.date)

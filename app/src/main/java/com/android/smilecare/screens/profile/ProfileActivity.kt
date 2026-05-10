@@ -95,7 +95,13 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
 
         val image = findViewById<ImageView>(R.id.imageProfilePhoto)
         if (user.photoUri.isNotBlank()) {
-            image.setImageURI(Uri.parse(user.photoUri))
+            try {
+                image.setImageURI(Uri.parse(user.photoUri))
+            } catch (_: Exception) {
+                image.setImageResource(R.drawable.profile)
+                presenter.onRemovePhoto()
+                toast("Saved profile photo can't be accessed. Please upload again.")
+            }
         } else {
             image.setImageResource(R.drawable.profile)
         }

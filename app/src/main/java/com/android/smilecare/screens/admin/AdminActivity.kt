@@ -163,7 +163,7 @@ class AdminActivity : AppCompatActivity(),
         val rg = findViewById<RadioGroup>(R.id.rgAdminStatusFilter)
         rg.setOnCheckedChangeListener { group, checkedId ->
             for (i in 0 until group.childCount) {
-                val rb = group.getChildAt(i) as RadioButton
+                val rb = group.getChildAt(i) as? RadioButton ?: continue
                 rb.setBackgroundResource(R.drawable.bg_time_slot)
                 rb.setTextColor(getColor(R.color.text_primary))
             }
