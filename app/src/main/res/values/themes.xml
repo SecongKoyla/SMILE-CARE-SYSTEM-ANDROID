@@ -5,6 +5,7 @@
         <item name="colorSecondary">@color/teal_dark</item>
         <item name="android:windowBackground">@color/background</item>
         <item name="android:statusBarColor">@color/navy_dark</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <style name="Theme.SmileCare" parent="Base.Theme.SmileCare" />
