@@ -24,7 +24,7 @@
             android:gravity="center"/>
     </FrameLayout>
 
-    <!-- Name + email -->
+    <!-- Name + email + meta -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -48,15 +48,26 @@
             android:text="john@email.com"
             android:textSize="12sp"
             android:textColor="@color/text_secondary"/>
+
+        <TextView
+            android:id="@+id/textClientMeta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ID: 0000"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            android:maxLines="1"
+            android:ellipsize="end"/>
     </LinearLayout>
 
-    <!-- Appointment count badge -->
+    <!-- Role badge -->
     <TextView
-        android:id="@+id/textClientApptCount"
+        android:id="@+id/textClientRole"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="3 appointments"
+        android:text="USER"
         android:textSize="11sp"
+        android:textStyle="bold"
         android:textColor="@color/teal_dark"
         android:background="@drawable/bg_teal_pill"
         android:paddingLeft="10dp"

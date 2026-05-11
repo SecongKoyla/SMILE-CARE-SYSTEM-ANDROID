@@ -275,8 +275,14 @@ class CustomApp : Application() {
             org.json.JSONArray()
         }
 
+        var didMutate = false
+
         for (i in 0 until jsonArray.length()) {
             val obj = jsonArray.optJSONObject(i) ?: continue
+
+            val id = obj.optString("id", "").trim()
+            if (id.isBlank()) didMutate = true
+
             registeredUsers.add(
                 User(
                     firstName = obj.optString("firstName", ""),
@@ -284,12 +290,11 @@ class CustomApp : Application() {
                     email     = obj.optString("email", ""),
                     password  = obj.optString("password", ""),
                     photoUri  = obj.optString("photoUri", ""),
-                    role      = try { UserRole.valueOf(obj.optString("role", "USER")) } catch (_: Exception) { UserRole.USER }
+                    role      = try { UserRole.valueOf(obj.optString("role", "USER")) } catch (_: Exception) { UserRole.USER },
+                    id        = if (id.isBlank()) java.util.UUID.randomUUID().toString() else id
                 )
             )
         }
-
-        var didMutate = false
 
         // Seed demo user
         if (registeredUsers.none { it.email.equals("test@gmail.com", ignoreCase = true) }) {
@@ -315,6 +320,7 @@ class CustomApp : Application() {
             obj.put("password", user.password)
             obj.put("photoUri", user.photoUri)
             obj.put("role", user.role.name)
+            obj.put("id", user.id)
             jsonArray.put(obj)
         }
         prefs.edit().putString("users", jsonArray.toString()).apply()

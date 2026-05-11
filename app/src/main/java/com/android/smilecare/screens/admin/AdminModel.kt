@@ -66,7 +66,9 @@ class AdminModel(private val app: CustomApp) {
     // ── Clients ──────────────────────────────────────────────────────────────
 
     fun getClients(): List<User> =
-        app.registeredUsers.filter { it.role == UserRole.USER }
+        app.registeredUsers
+            .toList()
+            .sortedWith(compareBy<User>({ it.role.name }, { it.lastName.lowercase() }, { it.firstName.lowercase() }, { it.email.lowercase() }))
 
     // ── Logged-in admin ──────────────────────────────────────────────────────
 
