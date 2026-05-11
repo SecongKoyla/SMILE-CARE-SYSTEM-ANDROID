@@ -6,6 +6,7 @@ import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
+import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -15,6 +16,7 @@ import com.android.smilecare.data.Appointment
 import com.android.smilecare.data.AppointmentStatus
 import com.android.smilecare.data.DentalService
 import com.android.smilecare.data.User
+import com.android.smilecare.data.UserRole
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityContract
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityModel
 import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailabilityPresenter
@@ -52,6 +54,11 @@ class AdminActivity : AppCompatActivity(),
     private var selectedDateFilter: Date? = null
     private var currentStatusFilter = "All"
 
+    // Registered Clients tab state
+    private var allUsersForClientsTab: List<User> = emptyList()
+    private var clientsTabSearchQuery: String = ""
+    private var didSetupClientsTab = false
+
     // Clinic exceptions (Admin UI only)
     private var pendingExceptionDateYmd: Int? = null
 
@@ -69,6 +76,7 @@ class AdminActivity : AppCompatActivity(),
         setupTopBar()
         setupTabs()
         setupAllAppointmentsTab()
+        setupRegisteredClientsTab()
 
         showTab(TAB_ALL_APPOINTMENTS)
     }
@@ -172,6 +180,36 @@ class AdminActivity : AppCompatActivity(),
             TAB_MANAGE_SERVICES  -> { manageServicesPresenter.loadServices(); setupAddServiceButton() }
             TAB_CLINIC_AVAIL     -> buildClinicAvailabilityView()
             TAB_CLIENTS          -> registeredClientsPresenter.loadClients()
+        }
+    }
+
+    private fun setupRegisteredClientsTab() {
+        if (didSetupClientsTab) return
+        didSetupClientsTab = true
+
+        val edit = findViewById<EditText>(R.id.editClientsSearch)
+        val btnSearch = findViewById<Button>(R.id.btnClientsSearch)
+        val btnClear = findViewById<TextView>(R.id.textClientsClearSearch)
+
+        fun performSearch() {
+            clientsTabSearchQuery = edit.text?.toString().orEmpty()
+            renderClientsList()
+        }
+
+        btnSearch.setOnClickListener { performSearch() }
+        btnClear.setOnClickListener {
+            clientsTabSearchQuery = ""
+            edit.setText("")
+            renderClientsList()
+        }
+
+        edit.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch()
+                true
+            } else {
+                false
+            }
         }
     }
 
@@ -527,22 +565,59 @@ class AdminActivity : AppCompatActivity(),
     // ══════════════════════════════════════════════════════════════════════════
 
     override fun showClients(list: List<User>) {
+        allUsersForClientsTab = list
+        updateClientsDashboard(list)
+        renderClientsList()
+    }
+
+    private fun updateClientsDashboard(allUsers: List<User>) {
+        findViewById<TextView>(R.id.statUsersTotal).text = allUsers.size.toString()
+        findViewById<TextView>(R.id.statActivePatients).text = allUsers.count { it.role == UserRole.USER }.toString()
+        findViewById<TextView>(R.id.statAdminAccounts).text = allUsers.count { it.role == UserRole.ADMIN }.toString()
+    }
+
+    private fun renderClientsList() {
         val container = findViewById<LinearLayout>(R.id.adminClientsList)
         container.removeAllViews()
 
         val emptyView = findViewById<TextView>(R.id.textClientsEmpty)
-        if (list.isEmpty()) { emptyView.visibility = View.VISIBLE; return }
+
+        val query = clientsTabSearchQuery.trim()
+        val filtered = if (query.isBlank()) {
+            allUsersForClientsTab
+        } else {
+            val q = query.lowercase()
+            allUsersForClientsTab.filter { u ->
+                val fullName = (u.firstName + " " + u.lastName).trim().lowercase()
+                fullName.contains(q) ||
+                    u.firstName.lowercase().contains(q) ||
+                    u.lastName.lowercase().contains(q) ||
+                    u.email.lowercase().contains(q)
+            }
+        }
+
+        if (allUsersForClientsTab.isEmpty()) {
+            emptyView.text = "No users registered yet."
+            emptyView.visibility = View.VISIBLE
+            return
+        }
+
+        if (filtered.isEmpty()) {
+            emptyView.text = "No matches found."
+            emptyView.visibility = View.VISIBLE
+            return
+        }
+
         emptyView.visibility = View.GONE
 
-        val app = application as CustomApp
-        list.forEach { client ->
+        filtered.forEach { user ->
             val item = LayoutInflater.from(this).inflate(R.layout.item_admin_client, container, false)
-            val initial = "${client.firstName.firstOrNull() ?: ""}${client.lastName.firstOrNull() ?: ""}"
-            item.findViewById<TextView>(R.id.textClientInitials).text    = initial.uppercase()
-            item.findViewById<TextView>(R.id.textClientName).text        = "${client.firstName} ${client.lastName}"
-            item.findViewById<TextView>(R.id.textClientEmail).text       = client.email
-            val apptCount = app.appointments.count { it.userEmail.equals(client.email, ignoreCase = true) }
-            item.findViewById<TextView>(R.id.textClientApptCount).text   = "$apptCount appointment${if (apptCount != 1) "s" else ""}"
+            val initial = "${user.firstName.firstOrNull() ?: ""}${user.lastName.firstOrNull() ?: ""}"
+            item.findViewById<TextView>(R.id.textClientInitials).text = initial.uppercase()
+            item.findViewById<TextView>(R.id.textClientName).text = "${user.firstName} ${user.lastName}".trim()
+            item.findViewById<TextView>(R.id.textClientEmail).text = user.email
+            item.findViewById<TextView>(R.id.textClientRole).text = user.role.name
+            item.findViewById<TextView>(R.id.textClientMeta).text = "ID: ${user.id}"
             container.addView(item)
         }
     }

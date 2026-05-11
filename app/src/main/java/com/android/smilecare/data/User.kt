@@ -6,7 +6,8 @@ data class User(
     var email: String = "",
     var password: String = "",
     var photoUri: String = "",
-    var role: UserRole = UserRole.USER
+    var role: UserRole = UserRole.USER,
+    var id: String = java.util.UUID.randomUUID().toString()
 )
 
 enum class UserRole {
