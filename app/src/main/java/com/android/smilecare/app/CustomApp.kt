@@ -47,6 +47,80 @@ class CustomApp : Application() {
     private val prefLastCrash = "last_crash"
     private val prefLastCrashTime = "last_crash_time"
 
+    data class SystemUpdate(
+        val timeMillis: Long,
+        val message: String
+    )
+
+    private fun systemUpdatesPrefKeyForUserKey(userKey: String): String = "system_updates_$userKey"
+
+    private fun userKeyForEmail(email: String): String {
+        val cleanedEmail = email.trim().lowercase()
+        if (cleanedEmail.isBlank()) return ""
+        val user = registeredUsers.firstOrNull { it.email.equals(cleanedEmail, ignoreCase = true) }
+        val id = user?.id?.trim().orEmpty()
+        return if (id.isNotBlank()) id else cleanedEmail
+    }
+
+    private fun loadSystemUpdatesForUserKey(userKey: String): MutableList<SystemUpdate> {
+        if (userKey.isBlank()) return mutableListOf()
+        val raw = prefs.getString(systemUpdatesPrefKeyForUserKey(userKey), null) ?: "[]"
+        val arr = try {
+            org.json.JSONArray(raw)
+        } catch (_: Exception) {
+            org.json.JSONArray()
+        }
+
+        val list = mutableListOf<SystemUpdate>()
+        for (i in 0 until arr.length()) {
+            val o = arr.optJSONObject(i) ?: continue
+            val msg = o.optString("message", "").trim()
+            if (msg.isBlank()) continue
+            val time = o.optLong("timeMillis", 0L)
+            list.add(SystemUpdate(timeMillis = time, message = msg))
+        }
+        return list
+    }
+
+    private fun saveSystemUpdatesForUserKey(userKey: String, updates: List<SystemUpdate>) {
+        if (userKey.isBlank()) return
+        val arr = org.json.JSONArray()
+        updates.forEach { u ->
+            val o = org.json.JSONObject()
+            o.put("timeMillis", u.timeMillis)
+            o.put("message", u.message)
+            arr.put(o)
+        }
+        prefs.edit().putString(systemUpdatesPrefKeyForUserKey(userKey), arr.toString()).apply()
+    }
+
+    fun addSystemUpdateForUserEmail(userEmail: String, message: String) {
+        val key = userKeyForEmail(userEmail)
+        val msg = message.trim()
+        if (key.isBlank() || msg.isBlank()) return
+
+        val existing = loadSystemUpdatesForUserKey(key)
+        existing.add(SystemUpdate(timeMillis = System.currentTimeMillis(), message = msg))
+
+        // Keep it MVP: cap stored notifications.
+        val capped = existing.takeLast(30)
+        saveSystemUpdatesForUserKey(key, capped)
+    }
+
+    fun getSystemUpdatesForLoggedInUser(): List<SystemUpdate> {
+        val user = loggedInUser ?: return emptyList()
+        val key = user.id.trim().ifBlank { user.email.trim().lowercase() }
+        return loadSystemUpdatesForUserKey(key)
+            .sortedByDescending { it.timeMillis }
+    }
+
+    fun clearSystemUpdatesForLoggedInUser() {
+        val user = loggedInUser ?: return
+        val key = user.id.trim().ifBlank { user.email.trim().lowercase() }
+        if (key.isBlank()) return
+        prefs.edit().remove(systemUpdatesPrefKeyForUserKey(key)).apply()
+    }
+
     override fun onCreate() {
         super.onCreate()
 
