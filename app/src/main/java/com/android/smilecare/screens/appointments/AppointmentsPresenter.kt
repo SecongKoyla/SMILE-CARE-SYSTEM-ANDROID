@@ -41,6 +41,17 @@ class AppointmentsPresenter(
             val updated = app.appointments[index].copy(status = AppointmentStatus.CANCELLED)
             app.appointments[index] = updated
             app.saveAppointments()
+
+            val userEmail = updated.userEmail
+            if (userEmail.isNotBlank()) {
+                val dateFmt = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+                val date = dateFmt.format(updated.date)
+                app.addSystemUpdateForUserEmail(
+                    userEmail,
+                    "You cancelled your appointment: ${updated.service.name} on $date at ${updated.timeSlot}"
+                )
+            }
+
             view.showMessage("Appointment cancelled")
             loadAppointments(currentFilter) // reload with same filter
         }

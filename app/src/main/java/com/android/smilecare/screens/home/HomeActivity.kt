@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.app.AlertDialog
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
 import com.android.smilecare.screens.appointments.AppointmentsFragment
@@ -18,6 +19,9 @@ import com.android.smilecare.screens.bookappointment.BookAppointmentFragment
 import com.android.smilecare.screens.login.LoginActivity
 import com.android.smilecare.screens.profile.ProfileActivity
 import com.android.smilecare.screens.services.ServicesFragment
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class HomeActivity : AppCompatActivity(), HomeContract.View {
 
@@ -65,12 +69,76 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
             loadFragment(ServicesFragment()); setActiveNav(3)
         }
 
+        findViewById<LinearLayout>(R.id.quickActionSystemUpdates).setOnClickListener {
+            showSystemUpdatesDialog()
+        }
+
         findViewById<TextView>(R.id.textLogout).setOnClickListener { presenter.logout() }
     }
 
     override fun onResume() {
         super.onResume()
         updateProfileAvatar()
+        updateSystemUpdatesBadge()
+    }
+
+    private fun updateSystemUpdatesBadge() {
+        val badge = findViewById<TextView>(R.id.textSystemUpdatesBadge)
+        val app = application as CustomApp
+        val count = app.getSystemUpdatesForLoggedInUser().size
+        if (count > 0) {
+            badge.text = count.toString()
+            badge.visibility = View.VISIBLE
+        } else {
+            badge.visibility = View.GONE
+        }
+    }
+
+    private fun showSystemUpdatesDialog() {
+        val app = application as CustomApp
+        val updates = app.getSystemUpdatesForLoggedInUser()
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_system_updates, null)
+        val countView = dialogView.findViewById<TextView>(R.id.textSystemUpdatesCount)
+        val emptyView = dialogView.findViewById<TextView>(R.id.textSystemUpdatesEmpty)
+        val listContainer = dialogView.findViewById<LinearLayout>(R.id.layoutSystemUpdatesList)
+        val btnClose = dialogView.findViewById<android.widget.Button>(R.id.btnSystemUpdatesClose)
+        val btnClear = dialogView.findViewById<android.widget.Button>(R.id.btnSystemUpdatesClear)
+
+        countView.text = updates.size.toString()
+        listContainer.removeAllViews()
+
+        if (updates.isEmpty()) {
+            emptyView.visibility = View.VISIBLE
+            btnClear.alpha = 0.6f
+            btnClear.isEnabled = false
+        } else {
+            emptyView.visibility = View.GONE
+            btnClear.alpha = 1f
+            btnClear.isEnabled = true
+            val fmt = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
+            updates.forEach { u ->
+                val row = layoutInflater.inflate(R.layout.item_system_update, listContainer, false)
+                val timeText = if (u.timeMillis > 0L) fmt.format(Date(u.timeMillis)) else ""
+                row.findViewById<TextView>(R.id.textUpdateTime).text = timeText
+                row.findViewById<TextView>(R.id.textUpdateMessage).text = u.message
+                listContainer.addView(row)
+            }
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+        btnClear.setOnClickListener {
+            app.clearSystemUpdatesForLoggedInUser()
+            updateSystemUpdatesBadge()
+            dialog.dismiss()
+        }
+
+        dialog.setOnDismissListener { updateSystemUpdatesBadge() }
+        dialog.show()
     }
 
     private fun updateProfileAvatar() {
@@ -146,6 +214,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         findViewById<View>(R.id.fragmentContainer).visibility = View.GONE
         presenter.loadHome()
         homeScrollView.visibility = View.VISIBLE
+        updateSystemUpdatesBadge()
     }
 
     override fun showGreeting(name: String, greeting: String) {

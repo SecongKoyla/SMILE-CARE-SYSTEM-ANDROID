@@ -27,5 +27,15 @@ class BookAppointmentModel(private val app: CustomApp) {
     fun addAppointment(appointment: Appointment) {
         app.appointments.add(appointment)
         app.saveAppointments()
+
+        if (appointment.userEmail.isNotBlank()) {
+            val dateFmt = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+            val date = dateFmt.format(appointment.date)
+            val time = appointment.timeSlot
+            app.addSystemUpdateForUserEmail(
+                appointment.userEmail,
+                "Appointment booked (Pending): ${appointment.service.name} on $date at $time"
+            )
+        }
     }
 }
