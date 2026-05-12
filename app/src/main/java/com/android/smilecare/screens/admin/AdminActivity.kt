@@ -23,6 +23,7 @@ import com.android.smilecare.screens.admin.clinicavailability.ClinicAvailability
 import com.android.smilecare.screens.login.LoginActivity
 import com.android.smilecare.screens.profile.ProfileActivity
 import com.android.smilecare.utils.ClinicDateUtils
+import com.android.smilecare.utils.disableEdgeToEdge
 import com.android.smilecare.utils.toast
 import java.text.SimpleDateFormat
 import java.util.*
@@ -64,6 +65,7 @@ class AdminActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableEdgeToEdge()
         setContentView(R.layout.activity_admin)
 
         model = AdminModel(application as CustomApp)

@@ -10,6 +10,7 @@ import com.android.smilecare.app.CustomApp
 import com.android.smilecare.screens.admin.AdminActivity
 import com.android.smilecare.screens.home.HomeActivity
 import com.android.smilecare.screens.register.RegisterActivity
+import com.android.smilecare.utils.disableEdgeToEdge
 import com.android.smilecare.utils.getEditTextValue
 import com.android.smilecare.utils.toast
 
@@ -19,6 +20,7 @@ class LoginActivity : AppCompatActivity(), LoginContract.View {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableEdgeToEdge()
         setContentView(R.layout.activity_login)
         presenter = LoginPresenter(this, LoginModel(application as CustomApp))
 

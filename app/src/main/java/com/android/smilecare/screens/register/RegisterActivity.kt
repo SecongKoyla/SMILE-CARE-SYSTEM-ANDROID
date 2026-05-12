@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.TextView
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
+import com.android.smilecare.utils.disableEdgeToEdge
 import com.android.smilecare.utils.getEditTextValue
 import com.android.smilecare.utils.toast
 
@@ -15,6 +16,7 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableEdgeToEdge()
         setContentView(R.layout.activity_register)
 
         presenter = RegisterPresenter(this, RegisterModel(application as CustomApp))

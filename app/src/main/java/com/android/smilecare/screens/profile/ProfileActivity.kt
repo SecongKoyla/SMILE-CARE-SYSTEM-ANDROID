@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.android.smilecare.R
 import com.android.smilecare.app.CustomApp
 import com.android.smilecare.data.User
+import com.android.smilecare.utils.disableEdgeToEdge
 import com.android.smilecare.utils.toast
 
 class ProfileActivity : AppCompatActivity(), ProfileContract.View {
@@ -47,6 +48,7 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableEdgeToEdge()
         setContentView(R.layout.activity_profile)
 
         presenter = ProfilePresenter(this, ProfileModel(application as CustomApp))

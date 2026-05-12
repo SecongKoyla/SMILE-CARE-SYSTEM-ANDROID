@@ -4,6 +4,7 @@ import android.app.Activity
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 
 fun Activity.getEditTextValue(id: Int): String {
@@ -12,6 +13,18 @@ fun Activity.getEditTextValue(id: Int): String {
 
 fun Activity.toast(message: String) {
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+}
+
+fun Activity.disableEdgeToEdge() {
+    val decorView = window.decorView
+    decorView.setOnApplyWindowInsetsListener { v, insets ->
+        val left = insets.systemWindowInsetLeft
+        val top = insets.systemWindowInsetTop
+        val right = insets.systemWindowInsetRight
+        val bottom = insets.systemWindowInsetBottom
+        v.setPadding(left, top, right, bottom)
+        insets.consumeSystemWindowInsets()
+    }
 }
 
 fun Fragment.toast(message: String) {

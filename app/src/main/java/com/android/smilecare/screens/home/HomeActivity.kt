@@ -19,6 +19,7 @@ import com.android.smilecare.screens.bookappointment.BookAppointmentFragment
 import com.android.smilecare.screens.login.LoginActivity
 import com.android.smilecare.screens.profile.ProfileActivity
 import com.android.smilecare.screens.services.ServicesFragment
+import com.android.smilecare.utils.disableEdgeToEdge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,6 +35,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableEdgeToEdge()
         setContentView(R.layout.activity_home)
 
         presenter = HomePresenter(this, HomeModel(application as CustomApp))
