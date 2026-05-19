@@ -601,6 +601,30 @@ class AdminActivity : AppCompatActivity(),
                     }
                     row.addView(reasonTv)
                 }
+
+                // Delete button for exception
+                val btnDelete = TextView(this).apply {
+                    text = "Delete"
+                    textSize = 11f
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                    setTextColor(getColor(R.color.status_cancelled))
+                    gravity = Gravity.CENTER
+                    setBackgroundResource(R.drawable.bg_delete_btn)
+                    setPadding(dp(12), dp(4), dp(12), dp(4))
+                    setOnClickListener {
+                        AlertDialog.Builder(this@AdminActivity)
+                            .setTitle("Remove Exception")
+                            .setMessage("Remove closed date exception for ${ClinicDateUtils.formatYmd(c.dateYmd)}?")
+                            .setPositiveButton("Remove") { _, _ -> clinicAvailabilityPresenter.onRemoveClosedDate(c.dateYmd) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    }
+                }
+                
+                val deleteLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                deleteLp.topMargin = dp(8)
+                row.addView(btnDelete, deleteLp)
+
                 val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                 lp.topMargin = dp(8)
                 list.addView(row, lp)

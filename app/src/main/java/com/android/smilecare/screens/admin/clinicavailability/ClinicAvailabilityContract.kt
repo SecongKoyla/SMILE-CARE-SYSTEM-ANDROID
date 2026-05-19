@@ -30,6 +30,7 @@ interface ClinicAvailabilityContract {
         fun onAfternoonStartPicked(totalMinutes: Int)
         fun onAfternoonEndPicked(totalMinutes: Int)
         fun onAddClosedDate(dateYmd: Int, reason: String)
+        fun onRemoveClosedDate(dateYmd: Int)
         fun onSaveClicked()
     }
 }
