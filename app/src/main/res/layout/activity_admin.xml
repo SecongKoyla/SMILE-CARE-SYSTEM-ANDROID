@@ -380,6 +380,18 @@
                         android:paddingRight="14dp"/>
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/textManageServicesEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No services added yet.\nTap '+ Add Service' to create one."
+                    android:textSize="14sp"
+                    android:textColor="@color/text_hint"
+                    android:gravity="center"
+                    android:paddingTop="40dp"
+                    android:paddingBottom="40dp"
+                    android:visibility="gone"/>
+
                 <LinearLayout
                     android:id="@+id/adminServicesList"
                     android:layout_width="match_parent"

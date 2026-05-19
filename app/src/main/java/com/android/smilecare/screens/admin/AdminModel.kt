@@ -82,6 +82,26 @@ class AdminModel(private val app: CustomApp) {
         app.saveServices()
     }
 
+    fun updateService(oldService: DentalService, newService: DentalService) {
+        val index = app.services.indexOfFirst { it.name.equals(oldService.name, ignoreCase = true) }
+        if (index != -1) {
+            app.services[index] = newService
+            app.saveServices()
+            // Optionally update appointments referencing this service? Not needed strictly but would be good.
+            var changedAppointments = false
+            for (i in app.appointments.indices) {
+                if (app.appointments[i].service.name.equals(oldService.name, ignoreCase = true)) {
+                    val updatedAppt = app.appointments[i].copy(service = newService)
+                    app.appointments[i] = updatedAppt
+                    changedAppointments = true
+                }
+            }
+            if (changedAppointments) {
+                app.saveAppointments()
+            }
+        }
+    }
+
     fun deleteService(service: DentalService) {
         app.services.removeAll { it.name.equals(service.name, ignoreCase = true) }
         app.saveServices()

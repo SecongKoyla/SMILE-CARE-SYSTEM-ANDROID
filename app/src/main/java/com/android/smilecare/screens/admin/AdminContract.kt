@@ -27,12 +27,14 @@ class AdminContract {
         fun showServices(list: List<DentalService>)
         fun showMessage(msg: String)
         fun showAddServiceDialog()
+        fun showEditServiceDialog(service: DentalService)
         fun dismissDialog()
     }
 
     interface ManageServicesPresenter {
         fun loadServices()
         fun addService(name: String, description: String, price: String, durationMin: String, emoji: String)
+        fun editService(oldService: DentalService, newName: String, newDescription: String, newPrice: String, newDurationMin: String, newEmoji: String)
         fun deleteService(service: DentalService)
     }
 
