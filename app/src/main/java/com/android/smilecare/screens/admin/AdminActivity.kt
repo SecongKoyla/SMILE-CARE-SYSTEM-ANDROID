@@ -365,7 +365,16 @@ class AdminActivity : AppCompatActivity(),
 
     override fun showServices(list: List<DentalService>) {
         val container = findViewById<LinearLayout>(R.id.adminServicesList)
+        val emptyText = findViewById<TextView>(R.id.textManageServicesEmpty)
         container.removeAllViews()
+
+        if (list.isEmpty()) {
+            emptyText.visibility = View.VISIBLE
+            container.visibility = View.GONE
+        } else {
+            emptyText.visibility = View.GONE
+            container.visibility = View.VISIBLE
+        }
 
         list.forEach { svc ->
             val item = LayoutInflater.from(this).inflate(R.layout.item_admin_service, container, false)
@@ -383,6 +392,9 @@ class AdminActivity : AppCompatActivity(),
                     .setPositiveButton("Delete") { _, _ -> manageServicesPresenter.deleteService(svc) }
                     .setNegativeButton("Cancel", null)
                     .show()
+            }
+            item.findViewById<TextView>(R.id.btnAdminEditService).setOnClickListener {
+                showEditServiceDialog(svc)
             }
             container.addView(item)
         }
@@ -407,6 +419,40 @@ class AdminActivity : AppCompatActivity(),
                     emoji       = dialogView.findViewById<EditText>(R.id.etSvcEmoji).text.toString()
                 )
                 // Dialog is dismissed only on success (presenter calls view.dismissDialog())
+            }
+        }
+
+        addServiceDialog = dialog
+        dialog.show()
+    }
+
+    override fun showEditServiceDialog(service: DentalService) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_service, null)
+        
+        // Pre-fill existing data
+        dialogView.findViewById<EditText>(R.id.etSvcName).setText(service.name)
+        dialogView.findViewById<EditText>(R.id.etSvcDescription).setText(service.description)
+        dialogView.findViewById<EditText>(R.id.etSvcPrice).setText(service.price.toString())
+        dialogView.findViewById<EditText>(R.id.etSvcDuration).setText(service.durationMinutes.toString())
+        dialogView.findViewById<EditText>(R.id.etSvcEmoji).setText(service.emoji)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Edit Service")
+            .setView(dialogView)
+            .setPositiveButton("Save", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                manageServicesPresenter.editService(
+                    oldService  = service,
+                    newName     = dialogView.findViewById<EditText>(R.id.etSvcName).text.toString(),
+                    newDescription = dialogView.findViewById<EditText>(R.id.etSvcDescription).text.toString(),
+                    newPrice    = dialogView.findViewById<EditText>(R.id.etSvcPrice).text.toString(),
+                    newDurationMin = dialogView.findViewById<EditText>(R.id.etSvcDuration).text.toString(),
+                    newEmoji    = dialogView.findViewById<EditText>(R.id.etSvcEmoji).text.toString()
+                )
             }
         }
 
@@ -555,6 +601,30 @@ class AdminActivity : AppCompatActivity(),
                     }
                     row.addView(reasonTv)
                 }
+
+                // Delete button for exception
+                val btnDelete = TextView(this).apply {
+                    text = "Delete"
+                    textSize = 11f
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                    setTextColor(getColor(R.color.status_cancelled))
+                    gravity = Gravity.CENTER
+                    setBackgroundResource(R.drawable.bg_delete_btn)
+                    setPadding(dp(12), dp(4), dp(12), dp(4))
+                    setOnClickListener {
+                        AlertDialog.Builder(this@AdminActivity)
+                            .setTitle("Remove Exception")
+                            .setMessage("Remove closed date exception for ${ClinicDateUtils.formatYmd(c.dateYmd)}?")
+                            .setPositiveButton("Remove") { _, _ -> clinicAvailabilityPresenter.onRemoveClosedDate(c.dateYmd) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    }
+                }
+                
+                val deleteLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                deleteLp.topMargin = dp(8)
+                row.addView(btnDelete, deleteLp)
+
                 val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                 lp.topMargin = dp(8)
                 list.addView(row, lp)

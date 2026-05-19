@@ -99,6 +99,15 @@ class ClinicAvailabilityPresenter(
         render()
     }
 
+    override fun onRemoveClosedDate(dateYmd: Int) {
+        val sizeBefore = pendingClosedDates.size
+        pendingClosedDates.removeAll { it.dateYmd == dateYmd }
+        if (pendingClosedDates.size < sizeBefore) {
+            hasUnsavedChanges = true
+            render()
+        }
+    }
+
     override fun onSaveClicked() {
         val valid =
             pendingMorningStartMinutes in 0..(24 * 60) &&
